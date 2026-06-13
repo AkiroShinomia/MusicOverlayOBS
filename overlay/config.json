@@ -25,8 +25,28 @@
     "marqueeDelayMs": 2000,
     "marqueeSpeedSec": 10
   },
+  "animations": {
+    "fullEnter": "slideRight",
+    "fullExit": "slideUp",
+    "tickerEnter": "slideRight"
+  },
   "albumArt": {
-    "useWindowsThumbnail": true,
+    "useWindowsThumbnail": false,
     "defaultCover": "/assets/default-cover.png"
+  },
+  "theme": {
+    "preset": "Custom"
+  },
+  "font": {
+    "family": "Arial",
+    "titleSize": 25,
+    "artistSize": 16,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "pill"
+  },
+  "fullCard": {
+    "style": "glass"
   }
 }

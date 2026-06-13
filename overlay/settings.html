@@ -11,6 +11,23 @@
       <h1>Music Overlay Settings</h1>
 
       <div class="group">
+        <h2>Темы</h2>
+
+        <label>
+          Готовая тема
+          <select id="themePreset">
+            <option value="Custom">Custom</option>
+            <option value="DarkGlass">Dark Glass</option>
+            <option value="AnimePink">Anime Pink</option>
+            <option value="Cyberpunk">Cyberpunk</option>
+            <option value="MinimalWhite">Minimal White</option>
+          </select>
+        </label>
+
+        <button id="applyThemeBtn" class="secondary-btn">Применить тему</button>
+      </div>
+
+      <div class="group">
         <h2>Позиция</h2>
         <label><span class="drag-label" data-target="left">Отступ слева</span><input id="left" type="number"></label>
         <label><span class="drag-label" data-target="fullBottom">Большая карточка снизу</span><input id="fullBottom" type="number"></label>
@@ -37,6 +54,64 @@
       </div>
 
       <div class="group">
+        <h2>Шрифт</h2>
+
+        <label>
+          Семейство
+          <select id="fontFamily">
+            <option value="Arial">Arial</option>
+            <option value="Segoe UI">Segoe UI</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Consolas">Consolas</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Impact">Impact</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Inter">Inter</option>
+            <option value="Oswald">Oswald</option>
+            <option value="Orbitron">Orbitron</option>
+          </select>
+        </label>
+
+        <label><span class="drag-label" data-target="titleSize">Размер названия</span><input id="titleSize" type="number"></label>
+        <label><span class="drag-label" data-target="artistSize">Размер артиста</span><input id="artistSize" type="number"></label>
+        <label><span class="drag-label" data-target="tickerSize">Размер маленькой строки</span><input id="tickerSize" type="number"></label>
+      </div>
+
+      <div class="group">
+        <h2>Стиль маленькой строки</h2>
+
+        <label>
+          Вид строки
+          <select id="tickerStyle">
+            <option value="pill">Pill</option>
+            <option value="glass">Glass Box</option>
+            <option value="thin">Thin Bar</option>
+            <option value="compact">Compact</option>
+            <option value="textonly">Text Only</option>
+          </select>
+        </label>
+      </div>
+      <div class="group">
+        <h2>Стиль большой карточки</h2>
+
+        <label>
+          Вид карточки
+          <select id="fullCardStyle">
+          <option value="glass">Glass</option>
+          <option value="solid">Solid</option>
+          <option value="minimal">Minimal</option>
+          <option value="neon">Neon</option>
+          <option value="spotify">Spotify</option>
+        </select>
+      </label>
+    </div>
+
+      <div class="group">
         <h2>Обложка</h2>
         <label>Использовать обложку Windows <input id="useWindowsThumbnail" type="checkbox"></label>
         <label>Своя дефолтная обложка <input id="defaultCoverFile" type="file" accept="image/*"></label>
@@ -51,6 +126,49 @@
         <label><span class="drag-label" data-target="exitMs">Скорость выхода, мс</span><input id="exitMs" type="number"></label>
         <label><span class="drag-label" data-target="marqueeDelayMs">Задержка бегущей строки, мс</span><input id="marqueeDelayMs" type="number"></label>
         <label><span class="drag-label" data-target="marqueeSpeedSec">Скорость бегущей строки, сек</span><input id="marqueeSpeedSec" type="number"></label>
+
+        <label>
+          Появление большой карточки
+          <select id="fullEnterAnimation">
+            <option value="slideLeft">Slide Left</option>
+            <option value="slideRight">Slide Right</option>
+            <option value="slideUp">Slide Up</option>
+            <option value="slideDown">Slide Down</option>
+            <option value="fade">Fade</option>
+            <option value="scale">Scale</option>
+            <option value="none">None</option>
+          </select>
+        </label>
+
+        <label>
+          Скрытие большой карточки
+        <select id="fullExitAnimation">
+          <option value="slideDown">Slide Down</option>
+          <option value="slideUp">Slide Up</option>
+          <option value="slideLeft">Slide Left</option>
+          <option value="slideRight">Slide Right</option>
+          <option value="fade">Fade</option>
+          <option value="scale">Scale</option>
+          <option value="none">None</option>
+        </select>
+      </label>
+
+      <label>
+        Появление маленькой строки
+        <select id="tickerEnterAnimation">
+          <option value="slideUp">Slide Up</option>
+          <option value="slideDown">Slide Down</option>
+          <option value="slideLeft">Slide Left</option>
+          <option value="slideRight">Slide Right</option>
+          <option value="fade">Fade</option>
+        <option value="scale">Scale</option>
+          <option value="none">None</option>
+        </select>
+      </label>
+        
+        <button id="playPreviewAnimationBtn" class="secondary-btn">
+          Запустить предпросмотр
+        </button>
       </div>
 
       <div class="buttons">
@@ -70,8 +188,8 @@
           <img id="previewCover" class="preview-cover" src="/assets/default-cover.png" />
 
           <div id="previewCard" class="preview-card">
-            <div class="preview-title">я не пойду с тобой гулять</div>
-            <div class="preview-artist">Серега Пират</div>
+            <div id="previewTitle" class="preview-title">я не пойду с тобой гулять</div>
+            <div id="previewArtist" class="preview-artist">Серега Пират</div>
             <div class="preview-time">
               <span>00:42</span>
               <span>02:56</span>
@@ -83,9 +201,9 @@
         </div>
 
         <div id="previewTicker" class="preview-ticker">
-          <div class="preview-ticker-title">я не пойду с тобой гулять - Серега Пират</div>
-          <div class="preview-ticker-time">00:42 / 02:56</div>
-          <div class="preview-progress">
+          <div id="previewTickerTitle" class="preview-ticker-title">я не пойду с тобой гулять - Серега Пират</div>
+          <div id="previewTickerTime" class="preview-ticker-time">00:42 / 02:56</div>
+          <div id="previewTickerProgress" class="preview-progress">
             <div class="preview-progress-bar"></div>
           </div>
         </div>

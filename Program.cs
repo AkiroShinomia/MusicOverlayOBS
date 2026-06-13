@@ -1,16 +1,30 @@
+using System.Diagnostics;
+using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Text.Json;
 using Windows.Media.Control;
 using Windows.Storage.Streams;
 
+const string CurrentVersion = "1.1.2";
+const string GitHubOwner = "AkiroShinomia";
+const string GitHubRepo = "MusicOverlayOBS";
+const string ReleaseAssetName = "MusicOverlayReady.zip";
+
 const string Url = "http://localhost:8799/";
+
+if (!args.Contains("--skip-update"))
+{
+    bool updateStarted = await CheckForUpdatesAndRun();
+    if (updateStarted)
+        return;
+}
 
 string overlayDir = Path.Combine(Directory.GetCurrentDirectory(), "overlay");
 string configPath = Path.Combine(overlayDir, "config.json");
 
-Console.Title = "Music Overlay";
-Console.WriteLine("MusicOverlay запущен");
+Console.Title = $"Music Overlay v{CurrentVersion}";
+Console.WriteLine($"MusicOverlay v{CurrentVersion} запущен");
 Console.WriteLine($"OBS Overlay: {Url}");
 Console.WriteLine($"Settings:    {Url}settings.html");
 Console.WriteLine("Для выхода закрой это окно.");
@@ -23,6 +37,145 @@ while (true)
 {
     var context = await listener.GetContextAsync();
     _ = Task.Run(() => HandleRequest(context));
+}
+
+async Task<bool> CheckForUpdatesAndRun()
+{
+    try
+    {
+        Console.WriteLine("Проверка обновлений...");
+
+        using var http = new HttpClient();
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("MusicOverlayOBS");
+
+        string apiUrl = $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases/latest";
+        string json = await http.GetStringAsync(apiUrl);
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        string tagName = root.GetProperty("tag_name").GetString() ?? "";
+        string latestVersionText = tagName.Trim().TrimStart('v', 'V');
+
+        if (!Version.TryParse(latestVersionText, out var latestVersion))
+        {
+            Console.WriteLine("Не удалось прочитать версию релиза.");
+            return false;
+        }
+
+        if (!Version.TryParse(CurrentVersion, out var currentVersion))
+        {
+            Console.WriteLine("Не удалось прочитать текущую версию.");
+            return false;
+        }
+
+        if (latestVersion <= currentVersion)
+        {
+            Console.WriteLine("Обновления не найдены.");
+            return false;
+        }
+
+        string? downloadUrl = null;
+
+        foreach (var asset in root.GetProperty("assets").EnumerateArray())
+        {
+            string name = asset.GetProperty("name").GetString() ?? "";
+
+            if (name.Equals(ReleaseAssetName, StringComparison.OrdinalIgnoreCase))
+            {
+                downloadUrl = asset.GetProperty("browser_download_url").GetString();
+                break;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(downloadUrl))
+        {
+            Console.WriteLine($"В релизе не найден файл {ReleaseAssetName}.");
+            return false;
+        }
+
+        Console.WriteLine($"Найдена новая версия: {latestVersion}");
+        Console.WriteLine("Скачивание обновления...");
+
+        string appDir = Directory.GetCurrentDirectory();
+        string tempDir = Path.Combine(Path.GetTempPath(), "MusicOverlayUpdate");
+        string zipPath = Path.Combine(tempDir, ReleaseAssetName);
+        string extractDir = Path.Combine(tempDir, "extract");
+        string backupConfigPath = Path.Combine(tempDir, "config.backup.json");
+
+        if (Directory.Exists(tempDir))
+            Directory.Delete(tempDir, true);
+
+        Directory.CreateDirectory(tempDir);
+        Directory.CreateDirectory(extractDir);
+
+        byte[] zipBytes = await http.GetByteArrayAsync(downloadUrl);
+        await File.WriteAllBytesAsync(zipPath, zipBytes);
+
+        ZipFile.ExtractToDirectory(zipPath, extractDir, true);
+
+        string currentConfigPath = Path.Combine(appDir, "overlay", "config.json");
+
+        if (File.Exists(currentConfigPath))
+        {
+            File.Copy(currentConfigPath, backupConfigPath, true);
+        }
+
+        string psPath = Path.Combine(tempDir, "update.ps1");
+        int pid = Environment.ProcessId;
+        string exePath = Environment.ProcessPath ?? Path.Combine(appDir, "MusicOverlay.exe");
+
+        string ps = $$"""
+$ErrorActionPreference = "Stop"
+
+$pidToWait = {{pid}}
+$appDir = "{{EscapePowerShell(appDir)}}"
+$extractDir = "{{EscapePowerShell(extractDir)}}"
+$backupConfigPath = "{{EscapePowerShell(backupConfigPath)}}"
+$exePath = "{{EscapePowerShell(exePath)}}"
+
+Write-Host "Waiting for MusicOverlay to close..."
+Wait-Process -Id $pidToWait -ErrorAction SilentlyContinue
+
+Start-Sleep -Milliseconds 500
+
+Write-Host "Copying update files..."
+Copy-Item -Path (Join-Path $extractDir "*") -Destination $appDir -Recurse -Force
+
+$configPath = Join-Path $appDir "overlay\config.json"
+if (Test-Path $backupConfigPath) {
+    Copy-Item -Path $backupConfigPath -Destination $configPath -Force
+}
+
+Write-Host "Starting MusicOverlay..."
+Start-Process -FilePath $exePath -ArgumentList "--skip-update" -WorkingDirectory $appDir
+""";
+
+        await File.WriteAllTextAsync(psPath, ps, Encoding.UTF8);
+
+        Console.WriteLine("Запуск обновлятора...");
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "powershell",
+            Arguments = $"-ExecutionPolicy Bypass -File \"{psPath}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
+
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Ошибка проверки обновлений:");
+        Console.WriteLine(ex.Message);
+        return false;
+    }
+}
+
+string EscapePowerShell(string value)
+{
+    return value.Replace("'", "''").Replace("\"", "`\"");
 }
 
 async Task HandleRequest(HttpListenerContext context)
@@ -219,6 +372,10 @@ string GetDefaultConfig()
     "exitMs": 600,
     "marqueeDelayMs": 2000,
     "marqueeSpeedSec": 10
+  },
+  "albumArt": {
+    "useWindowsThumbnail": false,
+    "defaultCover": "/assets/default-cover.png"
   }
 }
 """;

@@ -48,9 +48,29 @@ const defaultConfig = {
     marqueeDelayMs: 2000,
     marqueeSpeedSec: 10
   },
+  animations: {
+    fullEnter: "slideLeft",
+    fullExit: "slideDown",
+    tickerEnter: "slideUp"
+  },
   albumArt: {
     useWindowsThumbnail: false,
     defaultCover: DEFAULT_COVER
+  },
+  theme: {
+    preset: "Custom"
+  },
+  font: {
+    family: "Arial",
+    titleSize: 25,
+    artistSize: 16,
+    tickerSize: 14
+  },
+  ticker: {
+    style: "pill"
+  },
+  fullCard: {
+    style: "glass"
   }
 };
 
@@ -124,9 +144,29 @@ function mergeConfig(base, incoming) {
       ...base.timings,
       ...(incoming.timings || {})
     },
+    animations: {
+      ...base.animations,
+      ...(incoming.animations || {})
+    },
     albumArt: {
       ...base.albumArt,
       ...(incoming.albumArt || {})
+    },
+    theme: {
+      ...base.theme,
+      ...(incoming.theme || {})
+    },
+    font: {
+      ...base.font,
+      ...(incoming.font || {})
+    },
+    ticker: {
+      ...base.ticker,
+      ...(incoming.ticker || {})
+    },
+    fullCard: {
+      ...base.fullCard,
+      ...(incoming.fullCard || {})
     }
   };
 }
@@ -153,6 +193,37 @@ function applyConfig() {
   root.style.setProperty("--cover-delay-ms", `${config.timings.coverDelayMs}ms`);
   root.style.setProperty("--card-delay-ms", `${config.timings.cardDelayMs}ms`);
   root.style.setProperty("--marquee-speed-sec", `${config.timings.marqueeSpeedSec}s`);
+
+  root.style.setProperty("--font-family", `"${config.font.family}"`);
+  root.style.setProperty("--title-size", `${config.font.titleSize}px`);
+  root.style.setProperty("--artist-size", `${config.font.artistSize}px`);
+  root.style.setProperty("--ticker-size", `${config.font.tickerSize}px`);
+
+  const tickerStyles = [
+    "ticker-style-pill",
+    "ticker-style-glass",
+    "ticker-style-thin",
+    "ticker-style-compact",
+    "ticker-style-textonly"
+  ];
+
+  const cardStyles = [
+    "full-card-style-glass",
+    "full-card-style-solid",
+    "full-card-style-minimal",
+    "full-card-style-neon",
+    "full-card-style-spotify"
+  ];
+
+  tickerOverlay.classList.remove(...tickerStyles);
+  tickerOverlay.classList.add(`ticker-style-${config.ticker.style}`);
+
+  const fullCard = document.querySelector(".full-card");
+
+  if (fullCard) {
+    fullCard.classList.remove(...cardStyles);
+    fullCard.classList.add(`full-card-style-${config.fullCard.style}`);
+  }
 }
 
 async function updateNowPlayingFromApi() {
@@ -319,12 +390,28 @@ function renderProgress() {
 function showFullThenTicker() {
   clearTimers();
 
+  const fullEnter = config.animations?.fullEnter || "slideLeft";
+  const fullExit = config.animations?.fullExit || "slideDown";
+  const tickerEnter = config.animations?.tickerEnter || "slideUp";
+
+  const fullEnterClass = `anim-enter-${fullEnter}`;
+  const fullExitClass = `anim-exit-${fullExit}`;
+  const tickerEnterClass = `anim-enter-${tickerEnter}`;
+
+  clearAnimationClasses(fullOverlay);
+  clearAnimationClasses(tickerOverlay);
+
   tickerOverlay.classList.add("hidden");
 
-  fullOverlay.classList.remove("exit-down");
   fullOverlay.classList.remove("show-cover");
   fullOverlay.classList.remove("show-card");
   fullOverlay.classList.remove("hidden");
+
+  fullOverlay.classList.add(fullEnterClass);
+
+  setTimeout(() => {
+    fullOverlay.classList.remove(fullEnterClass);
+  }, 40);
 
   animationTimer1 = setTimeout(() => {
     fullOverlay.classList.add("show-cover");
@@ -335,24 +422,56 @@ function showFullThenTicker() {
   }, config.timings.cardDelayMs);
 
   fullTimer = setTimeout(() => {
-    fullOverlay.classList.add("exit-down");
+    clearAnimationClasses(fullOverlay);
+    fullOverlay.classList.add(fullExitClass);
 
     exitTimer = setTimeout(() => {
       fullOverlay.classList.add("hidden");
-      fullOverlay.classList.remove("exit-down");
       fullOverlay.classList.remove("show-cover");
       fullOverlay.classList.remove("show-card");
+      fullOverlay.classList.remove(fullExitClass);
+
+      clearAnimationClasses(tickerOverlay);
 
       tickerOverlay.classList.remove("hidden");
+      tickerOverlay.classList.add(tickerEnterClass);
+
+      setTimeout(() => {
+        tickerOverlay.classList.remove(tickerEnterClass);
+      }, 40);
     }, config.timings.exitMs);
   }, config.timings.fullVisibleMs);
+}
+
+function clearAnimationClasses(element) {
+  const classes = [
+    "anim-enter-slideLeft",
+    "anim-enter-slideRight",
+    "anim-enter-slideUp",
+    "anim-enter-slideDown",
+    "anim-enter-fade",
+    "anim-enter-scale",
+    "anim-enter-none",
+
+    "anim-exit-slideDown",
+    "anim-exit-slideUp",
+    "anim-exit-slideLeft",
+    "anim-exit-slideRight",
+    "anim-exit-fade",
+    "anim-exit-scale",
+    "anim-exit-none"
+  ];
+
+  element.classList.remove(...classes);
 }
 
 function hideAll() {
   clearTimers();
 
+  clearAnimationClasses(fullOverlay);
+  clearAnimationClasses(tickerOverlay);
+
   fullOverlay.classList.add("hidden");
-  fullOverlay.classList.remove("exit-down");
   fullOverlay.classList.remove("show-cover");
   fullOverlay.classList.remove("show-card");
 
