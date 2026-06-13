@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Music Overlay</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="fullOverlay" class="full-overlay hidden">
+    <div class="vinyl-wrap">
+      <div class="vinyl"></div>
+      <img id="cover" class="cover" src="/assets/default-cover.png" alt="cover" />
+    </div>
+
+    <div class="full-card">
+      <div id="title" class="title marquee-box">
+        <span id="titleText">Название трека</span>
+      </div>
+
+      <div id="artist" class="artist marquee-box">
+        <span id="artistText">Исполнитель</span>
+      </div>
+
+      <div class="time-row">
+        <span id="currentTime">00:00</span>
+        <span id="duration">00:00</span>
+      </div>
+
+      <div class="progress">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tickerOverlay" class="ticker-overlay hidden">
+    <div class="ticker-title marquee-box">
+      <span id="tickerTitleText">Название трека - Исполнитель</span>
+    </div>
+
+    <div class="ticker-time">
+      <span id="tickerCurrentTime">00:00</span>
+      <span>/</span>
+      <span id="tickerDuration">00:00</span>
+    </div>
+
+    <div class="ticker-progress">
+      <div id="tickerProgressBar" class="ticker-progress-bar"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

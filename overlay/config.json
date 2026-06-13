@@ -1,0 +1,32 @@
+﻿{
+  "position": {
+    "left": 70,
+    "fullBottom": 80,
+    "tickerBottom": 44
+  },
+  "sizes": {
+    "fullCardWidth": 430,
+    "tickerWidth": 500,
+    "tickerHeight": 42,
+    "coverSize": 92,
+    "vinylSize": 108
+  },
+  "colors": {
+    "background": "rgba(10, 10, 14, 0.80)",
+    "text": "#ffffff",
+    "progress": "#ffffff",
+    "progressBackground": "rgba(255, 255, 255, 0.18)"
+  },
+  "timings": {
+    "fullVisibleMs": 10000,
+    "coverDelayMs": 500,
+    "cardDelayMs": 850,
+    "exitMs": 600,
+    "marqueeDelayMs": 2000,
+    "marqueeSpeedSec": 10
+  },
+  "albumArt": {
+    "useWindowsThumbnail": true,
+    "defaultCover": "/assets/default-cover.png"
+  }
+}

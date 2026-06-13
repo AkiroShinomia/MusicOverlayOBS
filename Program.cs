@@ -1,0 +1,260 @@
+using System.Net;
+using System.Text;
+using System.Text.Json;
+using Windows.Media.Control;
+using Windows.Storage.Streams;
+
+const string Url = "http://localhost:8799/";
+
+string overlayDir = Path.Combine(Directory.GetCurrentDirectory(), "overlay");
+string configPath = Path.Combine(overlayDir, "config.json");
+
+Console.Title = "Music Overlay";
+Console.WriteLine("MusicOverlay запущен");
+Console.WriteLine($"OBS Overlay: {Url}");
+Console.WriteLine($"Settings:    {Url}settings.html");
+Console.WriteLine("Для выхода закрой это окно.");
+
+using var listener = new HttpListener();
+listener.Prefixes.Add(Url);
+listener.Start();
+
+while (true)
+{
+    var context = await listener.GetContextAsync();
+    _ = Task.Run(() => HandleRequest(context));
+}
+
+async Task HandleRequest(HttpListenerContext context)
+{
+    try
+    {
+        string path = context.Request.Url?.AbsolutePath ?? "/";
+
+        if (path == "/api/nowplaying")
+        {
+            var data = await GetNowPlaying();
+            await SendJson(context, data);
+            return;
+        }
+
+        if (path == "/api/config" && context.Request.HttpMethod == "GET")
+        {
+            await SendConfig(context);
+            return;
+        }
+
+        if (path == "/api/config" && context.Request.HttpMethod == "POST")
+        {
+            await SaveConfig(context);
+            return;
+        }
+
+        if (path == "/")
+            path = "/index.html";
+
+        string filePath = Path.Combine(overlayDir, path.TrimStart('/'));
+
+        if (!File.Exists(filePath))
+        {
+            context.Response.StatusCode = 404;
+            await WriteText(context, "Not found", "text/plain");
+            return;
+        }
+
+        string contentType = GetContentType(filePath);
+        byte[] bytes = await File.ReadAllBytesAsync(filePath);
+
+        context.Response.ContentType = contentType;
+        context.Response.ContentLength64 = bytes.Length;
+        await context.Response.OutputStream.WriteAsync(bytes);
+        context.Response.Close();
+    }
+    catch (Exception ex)
+    {
+        try
+        {
+            context.Response.StatusCode = 500;
+            await WriteText(context, ex.Message, "text/plain");
+        }
+        catch { }
+    }
+}
+
+async Task<object> GetNowPlaying()
+{
+    var manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
+    var session = manager.GetCurrentSession();
+
+    if (session == null)
+    {
+        return new
+        {
+            hasTrack = false,
+            title = "",
+            artist = "",
+            albumTitle = "",
+            position = 0,
+            duration = 0,
+            isPlaying = false,
+            thumbnail = ""
+        };
+    }
+
+    var media = await session.TryGetMediaPropertiesAsync();
+    var timeline = session.GetTimelineProperties();
+    var playback = session.GetPlaybackInfo();
+
+    double position = Math.Max(0, timeline.Position.TotalSeconds);
+    double duration = Math.Max(0, (timeline.EndTime - timeline.StartTime).TotalSeconds);
+
+    string thumbnail = await GetThumbnailBase64(media.Thumbnail);
+
+    return new
+    {
+        hasTrack = true,
+        title = media.Title ?? "",
+        artist = media.Artist ?? "",
+        albumTitle = media.AlbumTitle ?? "",
+        position,
+        duration,
+        isPlaying = playback.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing,
+        thumbnail
+    };
+}
+
+async Task<string> GetThumbnailBase64(IRandomAccessStreamReference? thumbnail)
+{
+    if (thumbnail == null)
+        return "";
+
+    try
+    {
+        using var stream = await thumbnail.OpenReadAsync();
+        using var reader = new DataReader(stream);
+
+        uint size = (uint)stream.Size;
+        await reader.LoadAsync(size);
+
+        byte[] buffer = new byte[size];
+        reader.ReadBytes(buffer);
+
+        string base64 = Convert.ToBase64String(buffer);
+        return $"data:image/png;base64,{base64}";
+    }
+    catch
+    {
+        return "";
+    }
+}
+
+async Task SendConfig(HttpListenerContext context)
+{
+    if (!File.Exists(configPath))
+    {
+        string defaultConfig = GetDefaultConfig();
+        Directory.CreateDirectory(overlayDir);
+        await File.WriteAllTextAsync(configPath, defaultConfig, Encoding.UTF8);
+    }
+
+    string json = await File.ReadAllTextAsync(configPath, Encoding.UTF8);
+    byte[] bytes = Encoding.UTF8.GetBytes(json);
+
+    context.Response.ContentType = "application/json; charset=utf-8";
+    context.Response.ContentLength64 = bytes.Length;
+    await context.Response.OutputStream.WriteAsync(bytes);
+    context.Response.Close();
+}
+
+async Task SaveConfig(HttpListenerContext context)
+{
+    using var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8);
+    string body = await reader.ReadToEndAsync();
+
+    try
+    {
+        using var doc = JsonDocument.Parse(body);
+        string formatted = JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        await File.WriteAllTextAsync(configPath, formatted, Encoding.UTF8);
+
+        await SendJson(context, new { ok = true });
+    }
+    catch
+    {
+        context.Response.StatusCode = 400;
+        await SendJson(context, new { ok = false, error = "Invalid JSON" });
+    }
+}
+
+string GetDefaultConfig()
+{
+    return """
+{
+  "position": {
+    "left": 70,
+    "fullBottom": 80,
+    "tickerBottom": 44
+  },
+  "sizes": {
+    "fullCardWidth": 430,
+    "tickerWidth": 500,
+    "tickerHeight": 42,
+    "coverSize": 92,
+    "vinylSize": 108
+  },
+  "colors": {
+    "background": "rgba(10, 10, 14, 0.80)",
+    "text": "#ffffff",
+    "progress": "#ffffff",
+    "progressBackground": "rgba(255, 255, 255, 0.18)"
+  },
+  "timings": {
+    "fullVisibleMs": 10000,
+    "coverDelayMs": 500,
+    "cardDelayMs": 850,
+    "exitMs": 600,
+    "marqueeDelayMs": 2000,
+    "marqueeSpeedSec": 10
+  }
+}
+""";
+}
+
+async Task SendJson(HttpListenerContext context, object data)
+{
+    string json = JsonSerializer.Serialize(data);
+    byte[] bytes = Encoding.UTF8.GetBytes(json);
+
+    context.Response.ContentType = "application/json; charset=utf-8";
+    context.Response.ContentLength64 = bytes.Length;
+    await context.Response.OutputStream.WriteAsync(bytes);
+    context.Response.Close();
+}
+
+async Task WriteText(HttpListenerContext context, string text, string contentType)
+{
+    byte[] bytes = Encoding.UTF8.GetBytes(text);
+    context.Response.ContentType = contentType;
+    context.Response.ContentLength64 = bytes.Length;
+    await context.Response.OutputStream.WriteAsync(bytes);
+    context.Response.Close();
+}
+
+string GetContentType(string path)
+{
+    return Path.GetExtension(path).ToLowerInvariant() switch
+    {
+        ".html" => "text/html; charset=utf-8",
+        ".css" => "text/css; charset=utf-8",
+        ".js" => "application/javascript; charset=utf-8",
+        ".json" => "application/json; charset=utf-8",
+        ".png" => "image/png",
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".svg" => "image/svg+xml",
+        _ => "application/octet-stream"
+    };
+}

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Music Overlay Settings</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <main class="layout">
+    <section class="panel">
+      <h1>Music Overlay Settings</h1>
+
+      <div class="group">
+        <h2>Позиция</h2>
+        <label><span class="drag-label" data-target="left">Отступ слева</span><input id="left" type="number"></label>
+        <label><span class="drag-label" data-target="fullBottom">Большая карточка снизу</span><input id="fullBottom" type="number"></label>
+        <label><span class="drag-label" data-target="tickerBottom">Маленькая строка снизу</span><input id="tickerBottom" type="number"></label>
+      </div>
+
+      <div class="group">
+        <h2>Размеры</h2>
+        <label><span class="drag-label" data-target="fullCardWidth">Ширина большой карточки</span><input id="fullCardWidth" type="number"></label>
+        <label><span class="drag-label" data-target="tickerWidth">Ширина строки</span><input id="tickerWidth" type="number"></label>
+        <label><span class="drag-label" data-target="tickerHeight">Высота строки</span><input id="tickerHeight" type="number"></label>
+        <label><span class="drag-label" data-target="coverSize">Размер обложки</span><input id="coverSize" type="number"></label>
+        <label><span class="drag-label" data-target="vinylSize">Размер пластинки</span><input id="vinylSize" type="number"></label>
+      </div>
+
+      <div class="group">
+        <h2>Цвета</h2>
+        <label>Фон карточек <input id="backgroundColor" type="color"></label>
+        <label><span class="drag-label" data-target="backgroundOpacity">Прозрачность фона %</span><input id="backgroundOpacity" type="number" min="0" max="100"></label>
+        <label>Текст <input id="text" type="color"></label>
+        <label>Прогресс <input id="progress" type="color"></label>
+        <label>Фон прогресса <input id="progressBackgroundColor" type="color"></label>
+        <label><span class="drag-label" data-target="progressBackgroundOpacity">Прозрачность фона прогресса %</span><input id="progressBackgroundOpacity" type="number" min="0" max="100"></label>
+      </div>
+
+      <div class="group">
+        <h2>Обложка</h2>
+        <label>Использовать обложку Windows <input id="useWindowsThumbnail" type="checkbox"></label>
+        <label>Своя дефолтная обложка <input id="defaultCoverFile" type="file" accept="image/*"></label>
+        <img id="defaultCoverPreview" class="cover-preview" src="/assets/default-cover.png" />
+      </div>
+
+      <div class="group">
+        <h2>Анимации</h2>
+        <label><span class="drag-label" data-target="fullVisibleMs">Большая карточка, мс</span><input id="fullVisibleMs" type="number"></label>
+        <label><span class="drag-label" data-target="coverDelayMs">Задержка обложки, мс</span><input id="coverDelayMs" type="number"></label>
+        <label><span class="drag-label" data-target="cardDelayMs">Задержка карточки, мс</span><input id="cardDelayMs" type="number"></label>
+        <label><span class="drag-label" data-target="exitMs">Скорость выхода, мс</span><input id="exitMs" type="number"></label>
+        <label><span class="drag-label" data-target="marqueeDelayMs">Задержка бегущей строки, мс</span><input id="marqueeDelayMs" type="number"></label>
+        <label><span class="drag-label" data-target="marqueeSpeedSec">Скорость бегущей строки, сек</span><input id="marqueeSpeedSec" type="number"></label>
+      </div>
+
+      <div class="buttons">
+        <button id="saveBtn">Сохранить</button>
+        <button id="resetBtn">Сбросить</button>
+      </div>
+
+      <p id="status"></p>
+    </section>
+
+    <section class="preview-panel">
+      <h2>Предпросмотр</h2>
+
+      <div class="preview-stage">
+        <div id="previewFull" class="preview-full">
+          <div class="preview-vinyl"></div>
+          <img id="previewCover" class="preview-cover" src="/assets/default-cover.png" />
+
+          <div id="previewCard" class="preview-card">
+            <div class="preview-title">я не пойду с тобой гулять</div>
+            <div class="preview-artist">Серега Пират</div>
+            <div class="preview-time">
+              <span>00:42</span>
+              <span>02:56</span>
+            </div>
+            <div class="preview-progress">
+              <div class="preview-progress-bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="previewTicker" class="preview-ticker">
+          <div class="preview-ticker-title">я не пойду с тобой гулять - Серега Пират</div>
+          <div class="preview-ticker-time">00:42 / 02:56</div>
+          <div class="preview-progress">
+            <div class="preview-progress-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="hint">Цифры можно менять перетаскиванием названия параметра влево/вправо.</p>
+    </section>
+  </main>
+
+  <script src="settings.js"></script>
+</body>
+</html>
