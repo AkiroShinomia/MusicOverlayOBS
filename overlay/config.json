@@ -26,9 +26,9 @@
     "marqueeSpeedSec": 10
   },
   "animations": {
-    "fullEnter": "slideRight",
-    "fullExit": "slideUp",
-    "tickerEnter": "slideRight"
+    "fullEnter": "slideLeft",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp"
   },
   "albumArt": {
     "useWindowsThumbnail": false,
@@ -48,5 +48,8 @@
   },
   "fullCard": {
     "style": "glass"
+  },
+  "vinyl": {
+    "style": "classic"
   }
 }

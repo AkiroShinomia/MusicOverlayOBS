@@ -18,6 +18,7 @@ const tickerDurationEl = document.getElementById("tickerDuration");
 const tickerProgressBar = document.getElementById("tickerProgressBar");
 
 const coverEl = document.getElementById("cover");
+const vinylEl = document.querySelector(".vinyl");
 
 const DEFAULT_COVER = "/assets/default-cover.png";
 
@@ -71,6 +72,9 @@ const defaultConfig = {
   },
   fullCard: {
     style: "glass"
+  },
+  vinyl: {
+    style: "classic"
   }
 };
 
@@ -167,6 +171,10 @@ function mergeConfig(base, incoming) {
     fullCard: {
       ...base.fullCard,
       ...(incoming.fullCard || {})
+    },
+    vinyl: {
+      ...base.vinyl,
+      ...(incoming.vinyl || {})
     }
   };
 }
@@ -223,6 +231,19 @@ function applyConfig() {
   if (fullCard) {
     fullCard.classList.remove(...cardStyles);
     fullCard.classList.add(`full-card-style-${config.fullCard.style}`);
+  }
+  const vinylStyles = [
+    "vinyl-style-classic",
+    "vinyl-style-black",
+    "vinyl-style-white",
+    "vinyl-style-gold",
+    "vinyl-style-transparent",
+    "vinyl-style-cd"
+  ];
+
+  if (vinylEl) {
+    vinylEl.classList.remove(...vinylStyles);
+    vinylEl.classList.add(`vinyl-style-${config.vinyl?.style || "classic"}`);
   }
 }
 

@@ -47,7 +47,10 @@ const defaultConfig = {
     style: "pill"
   },
   fullCard: {
-    style: "glass"
+  style: "glass"
+  },
+  vinyl: {
+    style: "classic"
   }
 };
 
@@ -69,6 +72,9 @@ const themePresets = {
     },
     ticker: {
       style: "pill"
+    },
+    vinyl: {
+      style: "classic"
     }
   },
 
@@ -87,6 +93,9 @@ const themePresets = {
     },
     ticker: {
       style: "glass"
+    },
+    vinyl: {
+      style: "white"
     }
   },
 
@@ -105,6 +114,9 @@ const themePresets = {
     },
     ticker: {
       style: "thin"
+    },
+    vinyl: {
+      style: "transparent"
     }
   },
 
@@ -123,6 +135,9 @@ const themePresets = {
     },
     ticker: {
       style: "compact"
+    },
+    vinyl: {
+      style: "cd"
     }
   }
 };
@@ -206,6 +221,7 @@ function fillForm(config) {
   set("marqueeDelayMs", config.timings.marqueeDelayMs);
   set("marqueeSpeedSec", config.timings.marqueeSpeedSec);
   set("fullCardStyle", config.fullCard.style || "glass");
+  set("vinylStyle", config.vinyl?.style || "classic");
 
   set(
     "fullEnterAnimation",
@@ -280,7 +296,10 @@ function readForm() {
     },
     fullCard: {
       style: val("fullCardStyle")
-  }
+    },
+    vinyl: {
+      style: val("vinylStyle")
+    }
   };
 }
 
@@ -331,6 +350,7 @@ function updatePreview(config) {
 
   applyPreviewTickerStyle(config.ticker.style);
   applyPreviewCardStyle(config.fullCard.style);
+  applyPreviewVinylStyle(config.vinyl?.style || "classic");
 }
 
 function applyPreviewTickerStyle(style) {
@@ -382,7 +402,8 @@ function applyThemePreset() {
     },
     colors: preset.colors,
     font: preset.font,
-    ticker: preset.ticker
+    ticker: preset.ticker,
+    vinyl: preset.vinyl
   });
 
   fillForm(next);
@@ -466,7 +487,8 @@ function mergeConfig(base, incoming) {
     theme: { ...base.theme, ...(incoming.theme || {}) },
     font: { ...base.font, ...(incoming.font || {}) },
     ticker: { ...base.ticker, ...(incoming.ticker || {}) },
-    fullCard: { ...base.fullCard, ...(incoming.fullCard || {}) }
+    fullCard: { ...base.fullCard, ...(incoming.fullCard || {}) },
+    vinyl: { ...base.vinyl, ...(incoming.vinyl || {}) }
   };
 }
 
@@ -555,6 +577,20 @@ function applyPreviewCardStyle(style) {
   previewCard.classList.add(
     `preview-card-style-${style}`
   );
+}
+
+function applyPreviewVinylStyle(style) {
+  const classes = [
+    "preview-vinyl-style-classic",
+    "preview-vinyl-style-black",
+    "preview-vinyl-style-white",
+    "preview-vinyl-style-gold",
+    "preview-vinyl-style-transparent",
+    "preview-vinyl-style-cd"
+  ];
+
+  previewVinyl.classList.remove(...classes);
+  previewVinyl.classList.add(`preview-vinyl-style-${style}`);
 }
 
 document.querySelectorAll("input, select").forEach(input => {
