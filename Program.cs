@@ -6,8 +6,9 @@ using System.Text.Json;
 using Windows.Media.Control;
 using Windows.Storage.Streams;
 using NAudio.Wave;
+using NAudio.CoreAudioApi;
 
-const string CurrentVersion = "1.2.1";
+const string CurrentVersion = "1.2.2";
 const string GitHubOwner = "AkiroShinomia";
 const string GitHubRepo = "MusicOverlayOBS";
 const string ReleaseAssetName = "MusicOverlayReady.zip";
@@ -196,7 +197,7 @@ async Task HandleRequest(HttpListenerContext context)
 
         if (path == "/api/audiolevel")
         {
-            await SendJson(context, audioLevelService.GetAudioLevel());
+            await SendJson(context, audioLevelService.GetAudioLevel("mediaSession"));
             return;
         }
 
@@ -256,6 +257,8 @@ async Task<object> GetNowPlaying()
 
     if (session == null)
     {
+        audioLevelService.SetMediaSource("");
+
         return new
         {
             hasTrack = false,
@@ -265,9 +268,13 @@ async Task<object> GetNowPlaying()
             position = 0,
             duration = 0,
             isPlaying = false,
-            thumbnail = ""
+            thumbnail = "",
+            sourceAppId = ""
         };
     }
+
+    string sourceAppId = session.SourceAppUserModelId ?? "";
+    audioLevelService.SetMediaSource(sourceAppId);
 
     var media = await session.TryGetMediaPropertiesAsync();
     var timeline = session.GetTimelineProperties();
@@ -287,7 +294,8 @@ async Task<object> GetNowPlaying()
         position,
         duration,
         isPlaying = playback.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing,
-        thumbnail
+        thumbnail,
+        sourceAppId
     };
 }
 
@@ -480,7 +488,8 @@ string GetContentType(string path)
 class AudioLevelService
 {
     private WasapiLoopbackCapture? capture;
-    private double level = 0;
+    private double systemLevel = 0;
+    private string currentSourceAppId = "";
 
     public void Start()
     {
@@ -491,7 +500,7 @@ class AudioLevelService
             capture.DataAvailable += OnDataAvailable;
             capture.RecordingStopped += (_, _) =>
             {
-                level = 0;
+                systemLevel = 0;
             };
 
             capture.StartRecording();
@@ -502,23 +511,121 @@ class AudioLevelService
         {
             Console.WriteLine("Audio level capture не запущен:");
             Console.WriteLine(ex.Message);
-            level = 0;
+            systemLevel = 0;
         }
     }
 
-    public object GetAudioLevel()
+    public void SetMediaSource(string sourceAppId)
     {
+        currentSourceAppId = sourceAppId ?? "";
+    }
+
+    public object GetAudioLevel(string mode = "mediaSession")
+    {
+        double level = mode switch
+        {
+            "system" => systemLevel,
+            "mediaSession" => GetMediaSessionLevel(),
+            _ => GetMediaSessionLevel()
+        };
+
         return new
         {
-            level = Math.Clamp(level, 0, 1)
+            level = Math.Clamp(level, 0, 1),
+            mode,
+            sourceAppId = currentSourceAppId
         };
+    }
+
+    private double GetMediaSessionLevel()
+    {
+        if (string.IsNullOrWhiteSpace(currentSourceAppId))
+            return systemLevel;
+
+        try
+        {
+            using var enumerator = new MMDeviceEnumerator();
+            using var device = enumerator.GetDefaultAudioEndpoint(
+                DataFlow.Render,
+                Role.Multimedia
+            );
+
+            var sessions = device.AudioSessionManager.Sessions;
+
+            double bestLevel = 0;
+
+            for (int i = 0; i < sessions.Count; i++)
+            {
+                var session = sessions[i];
+
+                int processId;
+
+                try
+                {
+                    processId = (int)session.GetProcessID;
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (processId <= 0)
+                    continue;
+
+                string processName;
+
+                try
+                {
+                    using var process = Process.GetProcessById(processId);
+                    processName = process.ProcessName;
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (!IsMatchingSource(processName, currentSourceAppId))
+                    continue;
+
+                double level = session.AudioMeterInformation.MasterPeakValue;
+
+                if (level > bestLevel)
+                    bestLevel = level;
+            }
+
+            return Math.Clamp(bestLevel, 0, 1);
+        }
+        catch
+        {
+            return systemLevel;
+        }
+    }
+
+    private bool IsMatchingSource(string processName, string sourceAppId)
+    {
+        if (string.IsNullOrWhiteSpace(processName))
+            return false;
+
+        if (string.IsNullOrWhiteSpace(sourceAppId))
+            return false;
+
+        string process = processName.ToLowerInvariant();
+        string source = sourceAppId.ToLowerInvariant();
+
+        if (source.Contains(process))
+            return true;
+
+        if (source.Contains(process + ".exe"))
+            return true;
+
+        return false;
     }
 
     private void OnDataAvailable(object? sender, WaveInEventArgs e)
     {
         if (e.BytesRecorded <= 0)
         {
-            level = 0;
+            systemLevel = 0;
             return;
         }
 
@@ -527,7 +634,7 @@ class AudioLevelService
 
         if (sampleCount <= 0)
         {
-            level = 0;
+            systemLevel = 0;
             return;
         }
 
@@ -542,9 +649,9 @@ class AudioLevelService
         double rms = Math.Sqrt(sum / sampleCount);
 
         double boosted = rms * 8.0;
-        level = level * 0.72 + boosted * 0.28;
+        systemLevel = systemLevel * 0.72 + boosted * 0.28;
 
-        level = Math.Clamp(level, 0, 1);
+        systemLevel = Math.Clamp(systemLevel, 0, 1);
     }
 }
 

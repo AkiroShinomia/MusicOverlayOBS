@@ -18,7 +18,7 @@
     "progressBackground": "rgba(255, 255, 255, 0.18)"
   },
   "timings": {
-    "fullVisibleMs": 1000,
+    "fullVisibleMs": 10000,
     "coverDelayMs": 500,
     "cardDelayMs": 850,
     "exitMs": 600,
@@ -31,7 +31,7 @@
     "tickerEnter": "slideUp"
   },
   "albumArt": {
-    "useWindowsThumbnail": true,
+    "useWindowsThumbnail": false,
     "defaultCover": "/assets/default-cover.png"
   },
   "theme": {
@@ -55,14 +55,14 @@
   "particles": {
     "enabled": true,
     "style": "notes",
-    "count": 2,
+    "count": 20,
     "size": 18,
     "durationMs": 2200,
     "color": "#ffffff"
   },
   "equalizer": {
     "enabled": true,
-    "style": "rainbow",
+    "style": "solid",
     "barCount": 64,
     "barWidth": 5,
     "gap": 3,
