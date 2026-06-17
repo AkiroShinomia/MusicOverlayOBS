@@ -7,7 +7,7 @@ using Windows.Media.Control;
 using Windows.Storage.Streams;
 using NAudio.Wave;
 
-const string CurrentVersion = "1.2.0";
+const string CurrentVersion = "1.2.1";
 const string GitHubOwner = "AkiroShinomia";
 const string GitHubRepo = "MusicOverlayOBS";
 const string ReleaseAssetName = "MusicOverlayReady.zip";
@@ -197,6 +197,12 @@ async Task HandleRequest(HttpListenerContext context)
         if (path == "/api/audiolevel")
         {
             await SendJson(context, audioLevelService.GetAudioLevel());
+            return;
+        }
+
+        if (path == "/api/themes")
+        {
+            await SendJson(context, GetThemes());
             return;
         }
 
@@ -390,6 +396,52 @@ string GetDefaultConfig()
 """;
 }
 
+object GetThemes()
+{
+    string themesDir = Path.Combine(overlayDir, "themes");
+
+    if (!Directory.Exists(themesDir))
+    {
+        Directory.CreateDirectory(themesDir);
+        return Array.Empty<object>();
+    }
+
+    return Directory
+        .GetFiles(themesDir, "*.json")
+        .Select(file =>
+        {
+            string fileName = Path.GetFileName(file);
+            string id = Path.GetFileNameWithoutExtension(file);
+
+            try
+            {
+                string json = File.ReadAllText(file, Encoding.UTF8);
+                using var doc = JsonDocument.Parse(json);
+
+                string name = doc.RootElement.TryGetProperty("name", out var nameProp)
+                    ? nameProp.GetString() ?? id
+                    : id;
+
+                return new
+                {
+                    id,
+                    name,
+                    path = $"/themes/{fileName}"
+                };
+            }
+            catch
+            {
+                return new
+                {
+                    id,
+                    name = $"{id} (invalid)",
+                    path = $"/themes/{fileName}"
+                };
+            }
+        })
+        .ToArray();
+}
+
 async Task SendJson(HttpListenerContext context, object data)
 {
     string json = JsonSerializer.Serialize(data);
@@ -495,3 +547,4 @@ class AudioLevelService
         level = Math.Clamp(level, 0, 1);
     }
 }
+
