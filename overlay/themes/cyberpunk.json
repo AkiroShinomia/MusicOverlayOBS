@@ -1,0 +1,49 @@
+{
+  "id": "cyberpunk",
+  "name": "Cyberpunk",
+  "colors": {
+    "background": "rgba(4, 16, 18, 0.86)",
+    "text": "#d8fff8",
+    "progress": "#00ffe1",
+    "progressBackground": "rgba(0, 255, 225, 0.20)"
+  },
+  "font": {
+    "family": "Consolas",
+    "titleSize": 24,
+    "artistSize": 15,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "thin"
+  },
+  "fullCard": {
+    "style": "neon"
+  },
+  "vinyl": {
+    "style": "transparent"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "pixels",
+    "count": 2,
+    "size": 16,
+    "durationMs": 1900,
+    "color": "#00ffe1"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "neon",
+    "barCount": 72,
+    "barWidth": 4,
+    "gap": 2,
+    "height": 70,
+    "offsetY": 0,
+    "sidePadding": 6,
+    "sensitivity": 1.35,
+    "smoothing": 0.55,
+    "glow": true,
+    "glowPower": 28,
+    "colorMode": "progress",
+    "color": "#00ffe1"
+  }
+}

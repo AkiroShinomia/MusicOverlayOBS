@@ -479,6 +479,85 @@ button {
     0 16px 34px rgba(0,0,0,.35);
 }
 
+.preview-equalizer {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: calc(100% + 1px);
+  height: 86px;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+
+  pointer-events: none;
+}
+
+.preview-eq-bar {
+  width: 5px;
+  min-height: 4px;
+  border-radius: 999px;
+  background: white;
+  transition: height 120ms cubic-bezier(.22,.61,.36,1);
+}
+
+.preview-equalizer.preview-eq-glow .preview-eq-bar {
+  box-shadow:
+    0 0 8px currentColor,
+    0 0 18px currentColor;
+}
+
+.preview-equalizer-style-solid .preview-eq-bar {
+  color: var(--preview-eq-color, #ffffff);
+  background: currentColor;
+}
+
+.preview-equalizer-style-neon .preview-eq-bar {
+  color: var(--preview-eq-color, #ffffff);
+  background: currentColor;
+  box-shadow:
+    0 0 8px currentColor,
+    0 0 18px currentColor,
+    0 0 32px currentColor;
+}
+
+.preview-equalizer-style-soft .preview-eq-bar {
+  color: var(--preview-eq-color, #ffffff);
+  background: currentColor;
+  opacity: 0.72;
+  filter: blur(0.2px);
+}
+
+.preview-equalizer-style-minimal .preview-eq-bar {
+  color: var(--preview-eq-color, #ffffff);
+  background: currentColor;
+  box-shadow: none !important;
+  opacity: 0.85;
+}
+
+.preview-equalizer-style-rainbow .preview-eq-bar {
+  background: currentColor;
+
+  box-shadow:
+    0 0 8px currentColor,
+    0 0 18px currentColor,
+    0 0 32px currentColor;
+
+  animation:
+    previewRainbowShift 4s linear infinite;
+}
+
+@keyframes previewRainbowShift {
+  0% { color: #ff3b3b; }
+  16% { color: #ffb13b; }
+  33% { color: #fff23b; }
+  50% { color: #3bff7a; }
+  66% { color: #3bdcff; }
+  83% { color: #b13bff; }
+  100% { color: #ff3b3b; }
+}
+
 @keyframes spin {
   from {
     transform: translateY(-50%) rotate(0deg);

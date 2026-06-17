@@ -227,7 +227,10 @@ function getEqualizerConfig() {
 
   const autoByTicker = {
     pill: {
-      sidePadding: 18,
+      sidePadding:
+        Math.round(
+          (config.sizes.tickerHeight || 42) * 0.65
+        ),
       offsetY: 0
     },
     glass: {

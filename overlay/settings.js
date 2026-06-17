@@ -1,3 +1,4 @@
+const previewEqualizer = document.getElementById("previewEqualizer");
 const defaultConfig = {
   position: {
     left: 70,
@@ -78,93 +79,8 @@ const defaultConfig = {
   }
 };
 
-const themePresets = {
-  Custom: null,
-
-  DarkGlass: {
-    colors: {
-      background: "rgba(10, 10, 14, 0.80)",
-      text: "#ffffff",
-      progress: "#ffffff",
-      progressBackground: "rgba(255, 255, 255, 0.18)"
-    },
-    font: {
-      family: "Arial",
-      titleSize: 25,
-      artistSize: 16,
-      tickerSize: 14
-    },
-    ticker: {
-      style: "pill"
-    },
-    vinyl: {
-      style: "classic"
-    }
-  },
-
-  AnimePink: {
-    colors: {
-      background: "rgba(45, 12, 38, 0.82)",
-      text: "#ffe6f5",
-      progress: "#ff7ad9",
-      progressBackground: "rgba(255, 122, 217, 0.22)"
-    },
-    font: {
-      family: "Trebuchet MS",
-      titleSize: 25,
-      artistSize: 16,
-      tickerSize: 14
-    },
-    ticker: {
-      style: "glass"
-    },
-    vinyl: {
-      style: "white"
-    }
-  },
-
-  Cyberpunk: {
-    colors: {
-      background: "rgba(4, 16, 18, 0.86)",
-      text: "#d8fff8",
-      progress: "#00ffe1",
-      progressBackground: "rgba(0, 255, 225, 0.20)"
-    },
-    font: {
-      family: "Consolas",
-      titleSize: 24,
-      artistSize: 15,
-      tickerSize: 14
-    },
-    ticker: {
-      style: "thin"
-    },
-    vinyl: {
-      style: "transparent"
-    }
-  },
-
-  MinimalWhite: {
-    colors: {
-      background: "rgba(255, 255, 255, 0.82)",
-      text: "#111111",
-      progress: "#111111",
-      progressBackground: "rgba(0, 0, 0, 0.16)"
-    },
-    font: {
-      family: "Segoe UI",
-      titleSize: 24,
-      artistSize: 15,
-      tickerSize: 14
-    },
-    ticker: {
-      style: "compact"
-    },
-    vinyl: {
-      style: "cd"
-    }
-  }
-};
+let availableThemes = [];
+let loadedThemes = {};
 
 const statusEl = document.getElementById("status");
 
@@ -186,6 +102,50 @@ const previewProgressBars = document.querySelectorAll(".preview-progress-bar");
 const previewProgress = document.querySelectorAll(".preview-progress");
 
 let currentDefaultCover = defaultConfig.albumArt.defaultCover;
+
+async function loadThemes() {
+  const select = document.getElementById("themePreset");
+
+  select.innerHTML = `<option value="Custom">Custom</option>`;
+
+  try {
+    const res = await fetch("/api/themes?t=" + Date.now(), {
+      cache: "no-store"
+    });
+
+    availableThemes = await res.json();
+
+    for (const theme of availableThemes) {
+      const option = document.createElement("option");
+      option.value = theme.id;
+      option.textContent = theme.name || theme.id;
+      select.appendChild(option);
+    }
+  } catch (e) {
+    console.error("Themes load error:", e);
+  }
+}
+
+async function getThemePreset(id) {
+  if (!id || id === "Custom") return null;
+
+  if (loadedThemes[id]) {
+    return loadedThemes[id];
+  }
+
+  const meta = availableThemes.find(x => x.id === id);
+
+  if (!meta) return null;
+
+  const res = await fetch(meta.path + "?t=" + Date.now(), {
+    cache: "no-store"
+  });
+
+  const theme = await res.json();
+  loadedThemes[id] = theme;
+
+  return theme;
+}
 
 async function loadConfig() {
   try {
@@ -429,6 +389,9 @@ function updatePreview(config) {
   applyPreviewTickerStyle(config.ticker.style);
   applyPreviewCardStyle(config.fullCard.style);
   applyPreviewVinylStyle(config.vinyl?.style || "classic");
+
+  createPreviewEqualizer(config);
+  updatePreviewEqualizer(config);
 }
 
 function applyPreviewTickerStyle(style) {
@@ -460,9 +423,9 @@ function applyPreviewTickerStyle(style) {
   }
 }
 
-function applyThemePreset() {
+async function applyThemePreset() {
   const presetName = val("themePreset");
-  const preset = themePresets[presetName];
+  const preset = await getThemePreset(presetName);
 
   if (!preset) {
     const config = readForm();
@@ -481,7 +444,10 @@ function applyThemePreset() {
     colors: preset.colors,
     font: preset.font,
     ticker: preset.ticker,
-    vinyl: preset.vinyl
+    fullCard: preset.fullCard,
+    vinyl: preset.vinyl,
+    particles: preset.particles,
+    equalizer: preset.equalizer
   });
 
   fillForm(next);
@@ -631,6 +597,64 @@ function fileToBase64(file) {
   });
 }
 
+function createPreviewEqualizer(config) {
+  if (!previewEqualizer) return;
+
+  previewEqualizer.innerHTML = "";
+
+  const eq = config?.equalizer || defaultConfig.equalizer;
+  const count = Math.max(8, Math.min(120, Number(eq.barCount || 64)));
+
+  for (let i = 0; i < count; i++) {
+    const bar = document.createElement("div");
+
+    bar.className = "preview-eq-bar";
+
+    bar.style.animationDelay = `${i * -0.08}s`;
+
+    const center = Math.abs(i - count / 2) / (count / 2);
+    const centerBoost = 1.35 - center * 0.65;
+
+    bar.style.height = `${8 + Math.random() * 40 * centerBoost}px`;
+
+    previewEqualizer.appendChild(bar);
+  }
+}
+
+function updatePreviewEqualizer(config) {
+  if (!previewEqualizer) return;
+
+  const eq = config.equalizer || defaultConfig.equalizer;
+
+  previewEqualizer.style.display = eq.enabled ? "" : "none";
+
+  previewEqualizer.style.left = `${eq.sidePadding ?? 14}px`;
+  previewEqualizer.style.right = `${eq.sidePadding ?? 14}px`;
+  previewEqualizer.style.bottom = `calc(100% + ${eq.offsetY ?? 0}px)`;
+  previewEqualizer.style.height = `${eq.height ?? 86}px`;
+  previewEqualizer.style.gap = `${eq.gap ?? 3}px`;
+
+  const color =
+    eq.colorMode === "custom"
+      ? eq.color
+      : config.colors.progress;
+
+  previewEqualizer.style.setProperty("--preview-eq-color", color);
+
+  previewEqualizer.className =
+    `preview-equalizer preview-equalizer-style-${eq.style || "solid"}`;
+
+  if (eq.glow) {
+    previewEqualizer.classList.add("preview-eq-glow");
+  }
+
+  const bars = previewEqualizer.querySelectorAll(".preview-eq-bar");
+
+  bars.forEach(bar => {
+    bar.style.width = `${eq.barWidth ?? 5}px`;
+  });
+}
+
 function set(id, value) {
   const el = document.getElementById(id);
   if (el) el.value = value;
@@ -686,12 +710,12 @@ document.querySelectorAll("input, select").forEach(input => {
   });
 });
 
-document.getElementById("applyThemeBtn").addEventListener("click", () => {
-  applyThemePreset();
+document.getElementById("applyThemeBtn").addEventListener("click", async () => {
+  await applyThemePreset();
 });
 
-document.getElementById("themePreset").addEventListener("change", () => {
-  applyThemePreset();
+document.getElementById("themePreset").addEventListener("change", async () => {
+  await applyThemePreset();
 });
 
 document.getElementById("defaultCoverFile").addEventListener("change", async e => {
@@ -778,5 +802,24 @@ document.getElementById("playPreviewAnimationBtn").addEventListener("click", () 
   playPreviewAnimation();
 });
 
+setInterval(() => {
+  if (!previewEqualizer) return;
+
+  const bars = previewEqualizer.querySelectorAll(".preview-eq-bar");
+
+  bars.forEach((bar, index) => {
+    const center = Math.abs(index - bars.length / 2) / (bars.length / 2);
+    const centerBoost = 1.35 - center * 0.65;
+
+    const height =
+      4 + Math.random() * 46 * centerBoost;
+
+    bar.style.height = `${height}px`;
+  });
+}, 140);
+
 setupDragNumbers();
-loadConfig();
+(async () => {
+  await loadThemes();
+  await loadConfig();
+})();

@@ -1,0 +1,49 @@
+{
+  "id": "anime-pink",
+  "name": "Anime Pink",
+  "colors": {
+    "background": "rgba(45, 12, 38, 0.82)",
+    "text": "#ffe6f5",
+    "progress": "#ff7ad9",
+    "progressBackground": "rgba(255, 122, 217, 0.22)"
+  },
+  "font": {
+    "family": "Trebuchet MS",
+    "titleSize": 25,
+    "artistSize": 16,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "glass"
+  },
+  "fullCard": {
+    "style": "glass"
+  },
+  "vinyl": {
+    "style": "white"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "hearts",
+    "count": 2,
+    "size": 18,
+    "durationMs": 2200,
+    "color": "#ff7ad9"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "neon",
+    "barCount": 56,
+    "barWidth": 5,
+    "gap": 3,
+    "height": 78,
+    "offsetY": 1,
+    "sidePadding": 8,
+    "sensitivity": 1.1,
+    "smoothing": 0.68,
+    "glow": true,
+    "glowPower": 24,
+    "colorMode": "progress",
+    "color": "#ff7ad9"
+  }
+}

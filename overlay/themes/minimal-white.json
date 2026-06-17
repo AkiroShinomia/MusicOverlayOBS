@@ -1,0 +1,49 @@
+{
+  "id": "minimal-white",
+  "name": "Minimal White",
+  "colors": {
+    "background": "rgba(255, 255, 255, 0.82)",
+    "text": "#111111",
+    "progress": "#111111",
+    "progressBackground": "rgba(0, 0, 0, 0.16)"
+  },
+  "font": {
+    "family": "Segoe UI",
+    "titleSize": 24,
+    "artistSize": 15,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "compact"
+  },
+  "fullCard": {
+    "style": "solid"
+  },
+  "vinyl": {
+    "style": "cd"
+  },
+  "particles": {
+    "enabled": false,
+    "style": "notes",
+    "count": 1,
+    "size": 16,
+    "durationMs": 2200,
+    "color": "#111111"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "minimal",
+    "barCount": 48,
+    "barWidth": 4,
+    "gap": 3,
+    "height": 58,
+    "offsetY": 0,
+    "sidePadding": 8,
+    "sensitivity": 1,
+    "smoothing": 0.72,
+    "glow": false,
+    "glowPower": 0,
+    "colorMode": "progress",
+    "color": "#111111"
+  }
+}

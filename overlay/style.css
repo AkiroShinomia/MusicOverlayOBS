@@ -559,9 +559,6 @@ body {
   gap: var(--eq-gap, 3px);
 
   pointer-events: none;
-  overflow: hidden;
-
-  border-radius: inherit;
 }
 
 .eq-bar {
