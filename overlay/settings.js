@@ -51,6 +51,30 @@ const defaultConfig = {
   },
   vinyl: {
     style: "classic"
+  },
+  particles: {
+    enabled: true,
+    style: "notes",
+    count: 20,
+    size: 18,
+    durationMs: 2200,
+    color: "#ffffff"
+  },
+  equalizer: {
+    enabled: true,
+    style: "solid",
+    barCount: 64,
+    barWidth: 5,
+    gap: 3,
+    height: 86,
+    offsetY: 0,
+    sidePadding: 14,
+    sensitivity: 1.15,
+    smoothing: 0.65,
+    glow: true,
+    glowPower: 18,
+    colorMode: "progress",
+    color: "#ffffff"
   }
 };
 
@@ -223,6 +247,36 @@ function fillForm(config) {
   set("fullCardStyle", config.fullCard.style || "glass");
   set("vinylStyle", config.vinyl?.style || "classic");
 
+  document.getElementById("particlesEnabled").checked =
+  Boolean(config.particles?.enabled);
+
+  set("particlesStyle", config.particles?.style || "notes");
+  set("particlesColor", config.particles?.color || "#ffffff");
+  set("particlesCount", config.particles?.count || 2);
+  set("particlesSize", config.particles?.size || 18);
+  set("particlesDurationMs", config.particles?.durationMs || 2200);
+
+  document.getElementById("equalizerEnabled").checked =
+  Boolean(config.equalizer?.enabled);
+
+  set("equalizerStyle", config.equalizer?.style || "solid");
+  set("equalizerColorMode", config.equalizer?.colorMode || "progress");
+  set("equalizerColor", config.equalizer?.color || "#ffffff");
+
+  set("equalizerBarCount", config.equalizer?.barCount || 64);
+  set("equalizerBarWidth", config.equalizer?.barWidth || 5);
+  set("equalizerGap", config.equalizer?.gap || 3);
+  set("equalizerHeight", config.equalizer?.height || 86);
+  set("equalizerOffsetY", config.equalizer?.offsetY ?? 0);
+  set("equalizerSidePadding", config.equalizer?.sidePadding || 14);
+  set("equalizerSensitivity", Math.round((config.equalizer?.sensitivity || 1.15) * 100));
+  set("equalizerSmoothing", Math.round((config.equalizer?.smoothing || 0.65) * 100));
+
+  document.getElementById("equalizerGlow").checked =
+    Boolean(config.equalizer?.glow);
+
+  set("equalizerGlowPower", config.equalizer?.glowPower || 18);
+
   set(
     "fullEnterAnimation",
     config.animations?.fullEnter || "slideLeft"
@@ -299,7 +353,31 @@ function readForm() {
     },
     vinyl: {
       style: val("vinylStyle")
-    }
+    },
+    particles: {
+    enabled: document.getElementById("particlesEnabled").checked,
+    style: val("particlesStyle"),
+    count: num("particlesCount"),
+    size: num("particlesSize"),
+    durationMs: num("particlesDurationMs"),
+    color: val("particlesColor")
+  },
+  equalizer: {
+    enabled: document.getElementById("equalizerEnabled").checked,
+    style: val("equalizerStyle"),
+    barCount: num("equalizerBarCount"),
+    barWidth: num("equalizerBarWidth"),
+    gap: num("equalizerGap"),
+    height: num("equalizerHeight"),
+    offsetY: num("equalizerOffsetY"),
+    sidePadding: num("equalizerSidePadding"),
+    sensitivity: num("equalizerSensitivity") / 100,
+    smoothing: num("equalizerSmoothing") / 100,
+    glow: document.getElementById("equalizerGlow").checked,
+    glowPower: num("equalizerGlowPower"),
+    colorMode: val("equalizerColorMode"),
+    color: val("equalizerColor")
+  }
   };
 }
 
@@ -488,7 +566,9 @@ function mergeConfig(base, incoming) {
     font: { ...base.font, ...(incoming.font || {}) },
     ticker: { ...base.ticker, ...(incoming.ticker || {}) },
     fullCard: { ...base.fullCard, ...(incoming.fullCard || {}) },
-    vinyl: { ...base.vinyl, ...(incoming.vinyl || {}) }
+    vinyl: { ...base.vinyl, ...(incoming.vinyl || {}) },
+    particles: { ...base.particles, ...(incoming.particles || {}) },
+    equalizer: { ...base.equalizer, ...(incoming.equalizer || {}) }
   };
 }
 

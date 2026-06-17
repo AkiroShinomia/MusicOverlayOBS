@@ -19,8 +19,12 @@ const tickerProgressBar = document.getElementById("tickerProgressBar");
 
 const coverEl = document.getElementById("cover");
 const vinylEl = document.querySelector(".vinyl");
+const particleContainer = document.getElementById("particleContainer");
 
 const DEFAULT_COVER = "/assets/default-cover.png";
+
+const equalizerEl = document.getElementById("equalizer");
+const eqBars = [];
 
 const defaultConfig = {
   position: {
@@ -75,6 +79,30 @@ const defaultConfig = {
   },
   vinyl: {
     style: "classic"
+  },
+  particles: {
+    enabled: true,
+    style: "notes",
+    count: 20,
+    size: 18,
+    durationMs: 2200,
+    color: "#ffffff"
+  },
+  equalizer: {
+    enabled: true,
+    style: "solid",
+    barCount: 64,
+    barWidth: 5,
+    gap: 3,
+    height: 86,
+    offsetY: 1,
+    sidePadding: 14,
+    sensitivity: 1.15,
+    smoothing: 0.65,
+    glow: true,
+    glowPower: 18,
+    colorMode: "progress",
+    color: "#ffffff"
   }
 };
 
@@ -93,6 +121,7 @@ let tickerScrollTimer = null;
 let lastThumbnail = "";
 let previousThumbnail = "";
 let ignoreOldThumbnailUntil = 0;
+let particleInterval = null;
 
 let state = {
   hasTrack: false,
@@ -107,6 +136,7 @@ let state = {
 async function init() {
   await loadConfig();
   applyConfig();
+  createEqualizer();
 
   setDefaultCover();
 
@@ -175,7 +205,55 @@ function mergeConfig(base, incoming) {
     vinyl: {
       ...base.vinyl,
       ...(incoming.vinyl || {})
+    },
+    particles: {
+      ...base.particles,
+      ...(incoming.particles || {})
+    },
+    equalizer: {
+      ...base.equalizer,
+      ...(incoming.equalizer || {})
     }
+  };
+}
+
+function getEqualizerConfig() {
+  const base = {
+    ...defaultConfig.equalizer,
+    ...(config.equalizer || {})
+  };
+
+  const tickerStyle = config.ticker?.style || "pill";
+
+  const autoByTicker = {
+    pill: {
+      sidePadding: 18,
+      offsetY: 0
+    },
+    glass: {
+      sidePadding: 8,
+      offsetY: 1
+    },
+    thin: {
+      sidePadding: 6,
+      offsetY: 0,
+      height: 64
+    },
+    compact: {
+      sidePadding: 8,
+      offsetY: 0,
+      height: 70
+    },
+    textonly: {
+      sidePadding: 0,
+      offsetY: 2,
+      height: 56
+    }
+  };
+
+  return {
+    ...base,
+    ...(autoByTicker[tickerStyle] || {})
   };
 }
 
@@ -206,6 +284,26 @@ function applyConfig() {
   root.style.setProperty("--title-size", `${config.font.titleSize}px`);
   root.style.setProperty("--artist-size", `${config.font.artistSize}px`);
   root.style.setProperty("--ticker-size", `${config.font.tickerSize}px`);
+
+  const eq = getEqualizerConfig();
+
+  root.style.setProperty("--eq-side-padding", `${eq.sidePadding}px`);
+    root.style.setProperty("--eq-offset-y", `${eq.offsetY}px`);
+  root.style.setProperty("--eq-height", `${eq.height}px`);
+  root.style.setProperty("--eq-gap", `${eq.gap}px`);
+  root.style.setProperty("--eq-bar-width", `${eq.barWidth}px`);
+  root.style.setProperty("--eq-glow-power", `${eq.glowPower}px`);
+
+  const eqColor = eq.colorMode === "custom"
+    ? eq.color
+    : config.colors.progress;
+
+  root.style.setProperty("--eq-color", eqColor);
+
+if (equalizerEl) {
+  equalizerEl.className = `equalizer equalizer-style-${eq.style}`;
+  equalizerEl.classList.toggle("equalizer-glow", Boolean(eq.glow));
+}
 
   const tickerStyles = [
     "ticker-style-pill",
@@ -300,6 +398,7 @@ async function updateNowPlayingFromApi() {
       }
 
       showFullThenTicker();
+      startParticles();
     } else {
       state.duration = duration || state.duration;
       state.isPlaying = isPlaying;
@@ -443,6 +542,7 @@ function showFullThenTicker() {
   }, config.timings.cardDelayMs);
 
   fullTimer = setTimeout(() => {
+    stopParticles();
     clearAnimationClasses(fullOverlay);
     fullOverlay.classList.add(fullExitClass);
 
@@ -487,6 +587,7 @@ function clearAnimationClasses(element) {
 }
 
 function hideAll() {
+  stopParticles();
   clearTimers();
 
   clearAnimationClasses(fullOverlay);
@@ -566,6 +667,187 @@ function formatTime(seconds) {
   const secs = seconds % 60;
 
   return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function startParticles() {
+  stopParticles();
+
+  if (!config.particles?.enabled) return;
+  if (!particleContainer) return;
+
+  spawnParticles();
+
+  particleInterval = setInterval(() => {
+    spawnParticles();
+  }, 420);
+}
+
+function stopParticles() {
+  if (particleInterval) {
+    clearInterval(particleInterval);
+    particleInterval = null;
+  }
+}
+
+function spawnParticles() {
+  if (!config.particles?.enabled) return;
+  if (!particleContainer) return;
+
+  const styles = {
+  notes: ["♪", "♫", "♬"],
+
+    stars: [
+      "★",
+      "✦",
+      "✧"
+    ],
+
+    hearts: [
+      "♥",
+      "♡"
+    ],
+
+    sparkles: [
+      "✦",
+      "❇",
+      "✧"
+    ],
+
+    pixels: [
+      "■",
+      "▪",
+      "□"
+    ],
+
+    crosses: [
+      "✝",
+      "✞",
+      "✟"
+    ],
+
+    invertedCrosses: [
+      "⸸",
+      "⸸",
+      "⸸"
+    ]
+  };
+
+  const symbols =
+    styles[config.particles.style] ||
+    styles.notes;
+
+  const count = Math.max(1, Number(config.particles.count || 2));
+
+  for (let i = 0; i < count; i++) {
+    const particle = document.createElement("div");
+
+    particle.className = "particle";
+    particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+
+    particle.style.color = config.particles.color || "#ffffff";
+    particle.style.fontSize = `${config.particles.size || 18}px`;
+    particle.style.animationDuration = `${config.particles.durationMs || 2200}ms`;
+
+    particle.style.setProperty(
+      "--particle-x",
+      `${(Math.random() - 0.5) * 180}px`
+    );
+
+    particle.style.setProperty(
+      "--particle-y",
+      `${-80 - Math.random() * 130}px`
+    );
+
+    particleContainer.appendChild(particle);
+
+    particle.addEventListener("animationend", () => {
+      particle.remove();
+    });
+  }
+}
+
+async function updateAudioLevel() {
+  try {
+    const response = await fetch(
+      `/api/audiolevel?t=${Date.now()}`,
+      { cache: "no-store" }
+    );
+
+    const data = await response.json();
+
+    renderEqualizer(data.level || 0);
+  }
+  catch {
+  }
+}
+
+let lastEqLevel = 0;
+
+function renderEqualizer(level) {
+  if (!equalizerEl) return;
+
+  const eq = getEqualizerConfig();
+
+  if (!eq.enabled) {
+    equalizerEl.style.display = "none";
+    return;
+  }
+
+  equalizerEl.style.display = "";
+
+  const raw = Math.max(0, Number(level || 0) - 0.012);
+  const boosted = Math.min(1, raw * Number(eq.sensitivity || 1));
+
+  lastEqLevel =
+    lastEqLevel * Number(eq.smoothing || 0.65) +
+    boosted * (1 - Number(eq.smoothing || 0.65));
+
+  const maxHeight = Number(eq.height || 86);
+
+  for (const bar of eqBars) {
+    const multiplier = Number(bar.dataset.multiplier || 1);
+    const randomBoost = 0.88 + Math.random() * 0.24;
+
+    const height =
+      4 +
+      lastEqLevel *
+      maxHeight *
+      multiplier *
+      randomBoost;
+
+    bar.style.height =
+      `${Math.max(4, Math.min(maxHeight, height))}px`;
+  }
+}
+
+setInterval(updateAudioLevel, 50);
+
+function createEqualizer() {
+  if (!equalizerEl) return;
+
+  const eq = getEqualizerConfig();
+
+  equalizerEl.innerHTML = "";
+  eqBars.length = 0;
+
+  const barCount = Math.max(8, Math.min(120, Number(eq.barCount || 64)));
+
+  for (let i = 0; i < barCount; i++) {
+    const bar = document.createElement("div");
+
+    bar.className = "eq-bar";
+    bar.style.setProperty("--bar-index", i);
+    bar.style.animationDelay = `${i * -0.08}s`;
+
+    const center = Math.abs(i - barCount / 2) / (barCount / 2);
+    const centerBoost = 1.35 - center * 0.65;
+
+    bar.dataset.multiplier =
+      (centerBoost * (0.72 + Math.random() * 0.55)).toFixed(2);
+
+    equalizerEl.appendChild(bar);
+    eqBars.push(bar);
+  }
 }
 
 init();

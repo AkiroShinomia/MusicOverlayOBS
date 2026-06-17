@@ -18,7 +18,7 @@
     "progressBackground": "rgba(255, 255, 255, 0.18)"
   },
   "timings": {
-    "fullVisibleMs": 10000,
+    "fullVisibleMs": 1000,
     "coverDelayMs": 500,
     "cardDelayMs": 850,
     "exitMs": 600,
@@ -31,7 +31,7 @@
     "tickerEnter": "slideUp"
   },
   "albumArt": {
-    "useWindowsThumbnail": false,
+    "useWindowsThumbnail": true,
     "defaultCover": "/assets/default-cover.png"
   },
   "theme": {
@@ -44,12 +44,36 @@
     "tickerSize": 14
   },
   "ticker": {
-    "style": "pill"
+    "style": "thin"
   },
   "fullCard": {
     "style": "glass"
   },
   "vinyl": {
-    "style": "classic"
+    "style": "cd"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "notes",
+    "count": 2,
+    "size": 18,
+    "durationMs": 2200,
+    "color": "#ffffff"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "rainbow",
+    "barCount": 64,
+    "barWidth": 5,
+    "gap": 3,
+    "height": 86,
+    "offsetY": 0,
+    "sidePadding": 14,
+    "sensitivity": 1.15,
+    "smoothing": 0.65,
+    "glow": true,
+    "glowPower": 18,
+    "colorMode": "progress",
+    "color": "#ffffff"
   }
 }

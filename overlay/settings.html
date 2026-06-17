@@ -127,6 +127,96 @@
       </label>
     </div>
 
+    <div class="group">
+      <h2>Частицы</h2>
+
+      <label>
+        Включить частицы
+        <input id="particlesEnabled" type="checkbox">
+      </label>
+
+      <label>
+        Тип частиц
+        <select id="particlesStyle">
+          <option value="notes">Ноты</option>
+          <option value="stars">Звезды</option>
+          <option value="hearts">Сердца</option>
+          <option value="sparkles">Искры</option>
+          <option value="pixels">Пиксели</option>
+          <option value="crosses">Кресты</option>
+          <option value="invertedCrosses">Перевернутые кресты</option>
+        </select>
+      </label>
+
+      <label>
+        Цвет частиц
+        <input id="particlesColor" type="color">
+      </label>
+
+      <label>
+        Количество за раз
+        <input id="particlesCount" type="number">
+      </label>
+
+      <label>
+        Размер
+        <input id="particlesSize" type="number">
+      </label>
+
+      <label>
+        Длительность, мс
+        <input id="particlesDurationMs" type="number">
+      </label>
+  </div>
+  <div class="group">
+  <h2>Эквалайзер</h2>
+
+    <label>
+      Включить эквалайзер
+      <input id="equalizerEnabled" type="checkbox">
+    </label>
+
+    <label>
+      Стиль
+      <select id="equalizerStyle">
+        <option value="solid">Solid</option>
+        <option value="neon">Neon</option>
+        <option value="rainbow">Rainbow</option>
+        <option value="soft">Soft</option>
+        <option value="minimal">Minimal</option>
+      </select>
+      </label>
+
+    <label>
+      Цвет
+      <select id="equalizerColorMode">
+        <option value="progress">Цвет прогресса</option>
+        <option value="custom">Свой цвет</option>
+      </select>
+    </label>
+
+    <label>
+      Свой цвет
+      <input id="equalizerColor" type="color">
+    </label>
+
+    <label><span class="drag-label" data-target="equalizerBarCount">Количество полос</span><input id="equalizerBarCount" type="number" min="8" max="120"></label>
+    <label><span class="drag-label" data-target="equalizerBarWidth">Ширина полос</span><input id="equalizerBarWidth" type="number" min="1" max="20"></label>
+    <label><span class="drag-label" data-target="equalizerGap">Расстояние</span><input id="equalizerGap" type="number" min="0" max="20"></label>
+    <label><span class="drag-label" data-target="equalizerHeight">Высота</span><input id="equalizerHeight" type="number" min="10" max="200"></label>
+    <label><span class="drag-label" data-target="equalizerOffsetY">Отступ от строки</span><input id="equalizerOffsetY" type="number" min="-20" max="80"></label>
+    <label><span class="drag-label" data-target="equalizerSidePadding">Боковой отступ</span><input id="equalizerSidePadding" type="number" min="0" max="80"></label>
+    <label><span class="drag-label" data-target="equalizerSensitivity">Чувствительность x100</span><input id="equalizerSensitivity" type="number" min="10" max="500"></label>
+    <label><span class="drag-label" data-target="equalizerSmoothing">Плавность %</span><input id="equalizerSmoothing" type="number" min="0" max="95"></label>
+
+    <label>
+      Glow
+      <input id="equalizerGlow" type="checkbox">
+    </label>
+
+    <label><span class="drag-label" data-target="equalizerGlowPower">Сила glow</span><input id="equalizerGlowPower" type="number" min="0" max="80"></label>
+  </div>
+
       <div class="group">
         <h2>Обложка</h2>
         <label>Использовать обложку Windows <input id="useWindowsThumbnail" type="checkbox"></label>

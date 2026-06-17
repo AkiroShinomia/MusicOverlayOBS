@@ -5,8 +5,9 @@ using System.Text;
 using System.Text.Json;
 using Windows.Media.Control;
 using Windows.Storage.Streams;
+using NAudio.Wave;
 
-const string CurrentVersion = "1.1.2";
+const string CurrentVersion = "1.1.3";
 const string GitHubOwner = "AkiroShinomia";
 const string GitHubRepo = "MusicOverlayOBS";
 const string ReleaseAssetName = "MusicOverlayReady.zip";
@@ -22,6 +23,8 @@ if (!args.Contains("--skip-update"))
 
 string overlayDir = Path.Combine(Directory.GetCurrentDirectory(), "overlay");
 string configPath = Path.Combine(overlayDir, "config.json");
+AudioLevelService audioLevelService = new();
+audioLevelService.Start();
 
 Console.Title = $"Music Overlay v{CurrentVersion}";
 Console.WriteLine($"MusicOverlay v{CurrentVersion} запущен");
@@ -188,6 +191,12 @@ async Task HandleRequest(HttpListenerContext context)
         {
             var data = await GetNowPlaying();
             await SendJson(context, data);
+            return;
+        }
+
+        if (path == "/api/audiolevel")
+        {
+            await SendJson(context, audioLevelService.GetAudioLevel());
             return;
         }
 
@@ -414,4 +423,75 @@ string GetContentType(string path)
         ".svg" => "image/svg+xml",
         _ => "application/octet-stream"
     };
+}
+
+class AudioLevelService
+{
+    private WasapiLoopbackCapture? capture;
+    private double level = 0;
+
+    public void Start()
+    {
+        try
+        {
+            capture = new WasapiLoopbackCapture();
+
+            capture.DataAvailable += OnDataAvailable;
+            capture.RecordingStopped += (_, _) =>
+            {
+                level = 0;
+            };
+
+            capture.StartRecording();
+
+            Console.WriteLine("Audio level capture запущен.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Audio level capture не запущен:");
+            Console.WriteLine(ex.Message);
+            level = 0;
+        }
+    }
+
+    public object GetAudioLevel()
+    {
+        return new
+        {
+            level = Math.Clamp(level, 0, 1)
+        };
+    }
+
+    private void OnDataAvailable(object? sender, WaveInEventArgs e)
+    {
+        if (e.BytesRecorded <= 0)
+        {
+            level = 0;
+            return;
+        }
+
+        int bytesPerSample = 4;
+        int sampleCount = e.BytesRecorded / bytesPerSample;
+
+        if (sampleCount <= 0)
+        {
+            level = 0;
+            return;
+        }
+
+        double sum = 0;
+
+        for (int i = 0; i < e.BytesRecorded; i += bytesPerSample)
+        {
+            float sample = BitConverter.ToSingle(e.Buffer, i);
+            sum += sample * sample;
+        }
+
+        double rms = Math.Sqrt(sum / sampleCount);
+
+        double boosted = rms * 8.0;
+        level = level * 0.72 + boosted * 0.28;
+
+        level = Math.Clamp(level, 0, 1);
+    }
 }
