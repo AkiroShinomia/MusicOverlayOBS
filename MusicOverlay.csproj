@@ -5,6 +5,12 @@
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <AssemblyName>MusicOverlay</AssemblyName>
+    <Product>Music Overlay OBS</Product>
+    <Company>AkiroShinomia</Company>
+    <Description>Local OBS music overlay for Windows</Description>
+    <Copyright>Copyright 2026 AkiroShinomia</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

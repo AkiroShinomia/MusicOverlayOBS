@@ -7,7 +7,7 @@ using Windows.Media.Control;
 using Windows.Storage.Streams;
 using NAudio.Wave;
 
-const string CurrentVersion = "1.1.3";
+const string CurrentVersion = "1.2.0";
 const string GitHubOwner = "AkiroShinomia";
 const string GitHubRepo = "MusicOverlayOBS";
 const string ReleaseAssetName = "MusicOverlayReady.zip";
