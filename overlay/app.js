@@ -778,15 +778,16 @@ async function updateAudioLevel() {
 
     const data = await response.json();
 
-    renderEqualizer(data.level || 0);
+    renderEqualizer(data);
   }
   catch {
   }
 }
 
 let lastEqLevel = 0;
+let lastEqBands = [];
 
-function renderEqualizer(level) {
+function renderEqualizer(audioData) {
   if (!equalizerEl) return;
 
   const eq = getEqualizerConfig();
@@ -798,14 +799,74 @@ function renderEqualizer(level) {
 
   equalizerEl.style.display = "";
 
+  const maxHeight = Number(eq.height || 86);
+  const smoothing = Number(eq.smoothing || 0.65);
+  const sensitivity = Number(eq.sensitivity || 1);
+
+  const bands = Array.isArray(audioData?.bands)
+    ? audioData.bands
+    : null;
+
+  if (bands && bands.length > 0) {
+    renderEqualizerBands(bands, maxHeight, smoothing, sensitivity);
+    return;
+  }
+
+  renderEqualizerLevel(audioData?.level || 0, maxHeight, smoothing, sensitivity);
+}
+
+function renderEqualizerBands(bands, maxHeight, smoothing, sensitivity) {
+  if (!lastEqBands.length || lastEqBands.length !== eqBars.length) {
+    lastEqBands = new Array(eqBars.length).fill(0);
+  }
+
+  for (let i = 0; i < eqBars.length; i++) {
+    const bar = eqBars[i];
+
+    const position =
+      (i / Math.max(1, eqBars.length - 1)) *
+      (bands.length - 1);
+
+    const leftIndex = Math.floor(position);
+    const rightIndex = Math.min(bands.length - 1, leftIndex + 1);
+
+    const t = position - leftIndex;
+
+    const leftValue = Number(bands[leftIndex] || 0);
+    const rightValue = Number(bands[rightIndex] || 0);
+
+    const interpolated =
+      leftValue * (1 - t) +
+      rightValue * t;
+
+    const rawBand = Math.max(0, interpolated - 0.008);
+    const boosted = Math.min(1, rawBand * sensitivity);
+
+    lastEqBands[i] =
+      lastEqBands[i] * smoothing +
+      boosted * (1 - smoothing);
+
+    const center = Math.abs(i - eqBars.length / 2) / (eqBars.length / 2);
+    const centerShape = 1.05 - center * 0.18;
+
+    const height =
+      4 +
+      lastEqBands[i] *
+      maxHeight *
+      centerShape;
+
+    bar.style.height =
+      `${Math.max(4, Math.min(maxHeight, height))}px`;
+  }
+}
+
+function renderEqualizerLevel(level, maxHeight, smoothing, sensitivity) {
   const raw = Math.max(0, Number(level || 0) - 0.012);
-  const boosted = Math.min(1, raw * Number(eq.sensitivity || 1));
+  const boosted = Math.min(1, raw * sensitivity);
 
   lastEqLevel =
-    lastEqLevel * Number(eq.smoothing || 0.65) +
-    boosted * (1 - Number(eq.smoothing || 0.65));
-
-  const maxHeight = Number(eq.height || 86);
+    lastEqLevel * smoothing +
+    boosted * (1 - smoothing);
 
   for (const bar of eqBars) {
     const multiplier = Number(bar.dataset.multiplier || 1);

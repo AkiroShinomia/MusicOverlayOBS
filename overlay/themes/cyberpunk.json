@@ -34,7 +34,7 @@
     "enabled": true,
     "style": "neon",
     "barCount": 72,
-    "barWidth": 4,
+    "barWidth": 5,
     "gap": 2,
     "height": 70,
     "offsetY": 0,
