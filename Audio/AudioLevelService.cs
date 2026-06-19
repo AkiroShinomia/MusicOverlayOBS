@@ -106,9 +106,9 @@ public class AudioLevelService
             processCapture.Start();
 
             fftProcessor.SetWaveFormat(processCapture.WaveFormat);
-            fftProcessor.SetOutputGain(0.7);
-            fftProcessor.SetSpectralContrast(1.9);
-            fftProcessor.SetVisualCurvePower(1.05);
+            fftProcessor.SetOutputGain(1);
+            fftProcessor.SetSpectralContrast(2.5);
+            fftProcessor.SetVisualCurvePower(1.25);
 
             activeProcessCaptureId = processId;
             lastFailedProcessId = 0;
@@ -185,7 +185,7 @@ private void OnSystemDataAvailable(object? sender, WaveInEventArgs e)
         e,
         systemCapture?.WaveFormat,
         allowFft: activeProcessCaptureId <= 0,
-        inputGain: 6.0
+        inputGain: 4.0
     );
 }
 
@@ -195,7 +195,7 @@ private void OnProcessDataAvailable(object? sender, WaveInEventArgs e)
         e,
         processCapture?.WaveFormat,
         allowFft: true,
-        inputGain: 2.0
+        inputGain: 4.0
     );
 }
 

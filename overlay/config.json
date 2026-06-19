@@ -12,13 +12,13 @@
     "vinylSize": 108
   },
   "colors": {
-    "background": "rgba(4, 16, 18, 0.86)",
-    "text": "#d8fff8",
-    "progress": "#00ffe1",
-    "progressBackground": "rgba(0, 255, 225, 0.20)"
+    "background": "rgba(10, 10, 14, 0.80)",
+    "text": "#ffffff",
+    "progress": "#ffffff",
+    "progressBackground": "rgba(255, 255, 255, 0.18)"
   },
   "timings": {
-    "fullVisibleMs": 1000,
+    "fullVisibleMs": 10000,
     "coverDelayMs": 500,
     "cardDelayMs": 850,
     "exitMs": 600,
@@ -38,42 +38,42 @@
     "preset": "Custom"
   },
   "font": {
-    "family": "Consolas",
-    "titleSize": 24,
-    "artistSize": 15,
+    "family": "Arial",
+    "titleSize": 25,
+    "artistSize": 16,
     "tickerSize": 14
   },
   "ticker": {
-    "style": "thin"
+    "style": "pill"
   },
   "fullCard": {
-    "style": "neon"
+    "style": "glass"
   },
   "vinyl": {
-    "style": "transparent"
+    "style": "classic"
   },
   "particles": {
     "enabled": true,
-    "style": "pixels",
-    "count": 2,
-    "size": 16,
-    "durationMs": 1900,
-    "color": "#00ffe1"
+    "style": "invertedCrosses",
+    "count": 20,
+    "size": 18,
+    "durationMs": 2200,
+    "color": "#000000"
   },
   "equalizer": {
     "enabled": true,
-    "style": "neon",
-    "barCount": 72,
+    "style": "solid",
+    "barCount": 64,
     "barWidth": 5,
-    "gap": 2,
-    "height": 70,
+    "gap": 3,
+    "height": 86,
     "offsetY": 0,
-    "sidePadding": 6,
-    "sensitivity": 1.35,
-    "smoothing": 0.55,
+    "sidePadding": 14,
+    "sensitivity": 1.15,
+    "smoothing": 0.65,
     "glow": true,
-    "glowPower": 28,
+    "glowPower": 18,
     "colorMode": "progress",
-    "color": "#00ffe1"
+    "color": "#ffffff"
   }
 }

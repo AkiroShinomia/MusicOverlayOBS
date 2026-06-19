@@ -278,12 +278,12 @@ private static IntPtr CreateWaveFormatExPtr(WaveFormat format)
 {
     WAVEFORMATEX waveFormat = new()
     {
-        wFormatTag = 3, // WAVE_FORMAT_IEEE_FLOAT
+        wFormatTag = 1, // WAVE_FORMAT_PCM
         nChannels = (ushort)format.Channels,
         nSamplesPerSec = (uint)format.SampleRate,
-        wBitsPerSample = 32,
-        nBlockAlign = (ushort)(format.Channels * 4),
-        nAvgBytesPerSec = (uint)(format.SampleRate * format.Channels * 4),
+        wBitsPerSample = (ushort)format.BitsPerSample,
+        nBlockAlign = (ushort)format.BlockAlign,
+        nAvgBytesPerSec = (uint)format.AverageBytesPerSecond,
         cbSize = 0
     };
 
