@@ -13,17 +13,13 @@ public sealed class ProcessLoopbackCapture : IDisposable
     private const int AUDCLNT_STREAMFLAGS_LOOPBACK = 0x00020000;
     private const int AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM = unchecked((int)0x80000000);
 
-    private static Guid IID_IAudioClient =
-        new("1CB9AD4C-DBFA-4c32-B178-C2F568A703B2");
-
-    private static Guid IID_IAudioCaptureClient =
-        new("C8ADBD64-E71E-48a0-A4DE-185C395CD317");
+    private static Guid IID_IAudioClient = new("1CB9AD4C-DBFA-4c32-B178-C2F568A703B2");
+    private static Guid IID_IAudioCaptureClient = new("C8ADBD64-E71E-48a0-A4DE-185C395CD317");
 
     private readonly int processId;
 
     private IAudioClient? audioClient;
     private IAudioCaptureClient? captureClient;
-
     private EventWaitHandle? sampleReadyEvent;
     private Thread? captureThread;
 
@@ -31,8 +27,7 @@ public sealed class ProcessLoopbackCapture : IDisposable
 
     public int ProcessId => processId;
 
-    public WaveFormat WaveFormat { get; private set; } =
-        WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
+    public WaveFormat WaveFormat { get; private set; } = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
 
     public event EventHandler<WaveInEventArgs>? DataAvailable;
 
@@ -45,66 +40,65 @@ public sealed class ProcessLoopbackCapture : IDisposable
     }
 
     public void Start()
-{
-    if (running)
-        return;
-
-    audioClient = ActivateAudioClient(processId);
-
-    WaveFormat = new WaveFormat(44100, 16, 2);
-
-    IntPtr waveFormatPtr = CreateWaveFormatExPtr(WaveFormat);
-
-    try
     {
-        int hr = audioClient.Initialize(
-            AUDCLNT_SHAREMODE_SHARED,
-            AUDCLNT_STREAMFLAGS_LOOPBACK |
-            AUDCLNT_STREAMFLAGS_EVENTCALLBACK |
-            AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
-            0,
-            0,
-            waveFormatPtr,
-            IntPtr.Zero
+        if (running)
+            return;
+
+        audioClient = ActivateAudioClient(processId);
+        WaveFormat = new WaveFormat(44100, 16, 2);
+
+        IntPtr waveFormatPtr = CreateWaveFormatExPtr(WaveFormat);
+
+        try
+        {
+            int hr = audioClient.Initialize(
+                AUDCLNT_SHAREMODE_SHARED,
+                AUDCLNT_STREAMFLAGS_LOOPBACK |
+                AUDCLNT_STREAMFLAGS_EVENTCALLBACK |
+                AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
+                0,
+                0,
+                waveFormatPtr,
+                IntPtr.Zero
+            );
+
+            Marshal.ThrowExceptionForHR(hr);
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(waveFormatPtr);
+        }
+
+        int serviceHr = audioClient.GetService(
+            ref IID_IAudioCaptureClient,
+            out object captureService
         );
 
-        Marshal.ThrowExceptionForHR(hr);
+        Marshal.ThrowExceptionForHR(serviceHr);
+
+        captureClient = (IAudioCaptureClient)captureService;
+
+        sampleReadyEvent = new EventWaitHandle(false, EventResetMode.AutoReset);
+
+        int eventHr = audioClient.SetEventHandle(
+            sampleReadyEvent.SafeWaitHandle.DangerousGetHandle()
+        );
+
+        Marshal.ThrowExceptionForHR(eventHr);
+
+        running = true;
+
+        int startHr = audioClient.Start();
+        Marshal.ThrowExceptionForHR(startHr);
+
+        captureThread = new Thread(CaptureLoop)
+        {
+            IsBackground = true,
+            Name = $"ProcessLoopbackCapture-{processId}"
+        };
+
+        captureThread.Start();
     }
-    finally
-    {
-        Marshal.FreeHGlobal(waveFormatPtr);
-    }
-
-    int serviceHr = audioClient.GetService(
-        ref IID_IAudioCaptureClient,
-        out object captureService
-    );
-
-    Marshal.ThrowExceptionForHR(serviceHr);
-
-    captureClient = (IAudioCaptureClient)captureService;
-
-    sampleReadyEvent = new EventWaitHandle(false, EventResetMode.AutoReset);
-
-    int eventHr = audioClient.SetEventHandle(
-        sampleReadyEvent.SafeWaitHandle.DangerousGetHandle()
-    );
-
-    Marshal.ThrowExceptionForHR(eventHr);
-
-    running = true;
-
-    int startHr = audioClient.Start();
-    Marshal.ThrowExceptionForHR(startHr);
-
-    captureThread = new Thread(CaptureLoop)
-    {
-        IsBackground = true,
-        Name = $"ProcessLoopbackCapture-{processId}"
-    };
-
-    captureThread.Start();
-}
 
     public void Stop()
     {
@@ -147,21 +141,21 @@ public sealed class ProcessLoopbackCapture : IDisposable
         sampleReadyEvent = null;
     }
 
-private void CaptureLoop()
-{
-    if (sampleReadyEvent == null || captureClient == null)
-        return;
-
-    while (running)
+    private void CaptureLoop()
     {
-        sampleReadyEvent.WaitOne(100);
+        if (sampleReadyEvent == null || captureClient == null)
+            return;
 
-        if (!running)
-            break;
+        while (running)
+        {
+            sampleReadyEvent.WaitOne(100);
 
-        ReadAvailablePackets();
+            if (!running)
+                break;
+
+            ReadAvailablePackets();
+        }
     }
-}
 
     private void ReadAvailablePackets()
     {
@@ -215,16 +209,15 @@ private void CaptureLoop()
 
     private static IAudioClient ActivateAudioClient(int processId)
     {
-        AUDIOCLIENT_ACTIVATION_PARAMS activationParams =
-            new()
+        AUDIOCLIENT_ACTIVATION_PARAMS activationParams = new()
+        {
+            ActivationType = AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK,
+            ProcessLoopbackParams = new AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS
             {
-                ActivationType = AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK,
-                ProcessLoopbackParams = new AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS
-                {
-                    TargetProcessId = (uint)processId,
-                    ProcessLoopbackMode = PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE
-                }
-            };
+                TargetProcessId = (uint)processId,
+                ProcessLoopbackMode = PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE
+            }
+        };
 
         IntPtr activationParamsPtr = Marshal.AllocHGlobal(
             Marshal.SizeOf<AUDIOCLIENT_ACTIVATION_PARAMS>()
@@ -274,24 +267,24 @@ private void CaptureLoop()
         }
     }
 
-private static IntPtr CreateWaveFormatExPtr(WaveFormat format)
-{
-    WAVEFORMATEX waveFormat = new()
+    private static IntPtr CreateWaveFormatExPtr(WaveFormat format)
     {
-        wFormatTag = 1, // WAVE_FORMAT_PCM
-        nChannels = (ushort)format.Channels,
-        nSamplesPerSec = (uint)format.SampleRate,
-        wBitsPerSample = (ushort)format.BitsPerSample,
-        nBlockAlign = (ushort)format.BlockAlign,
-        nAvgBytesPerSec = (uint)format.AverageBytesPerSecond,
-        cbSize = 0
-    };
+        WAVEFORMATEX waveFormat = new()
+        {
+            wFormatTag = 1,
+            nChannels = (ushort)format.Channels,
+            nSamplesPerSec = (uint)format.SampleRate,
+            wBitsPerSample = (ushort)format.BitsPerSample,
+            nBlockAlign = (ushort)format.BlockAlign,
+            nAvgBytesPerSec = (uint)format.AverageBytesPerSecond,
+            cbSize = 0
+        };
 
-    IntPtr ptr = Marshal.AllocHGlobal(Marshal.SizeOf<WAVEFORMATEX>());
-    Marshal.StructureToPtr(waveFormat, ptr, false);
+        IntPtr ptr = Marshal.AllocHGlobal(Marshal.SizeOf<WAVEFORMATEX>());
+        Marshal.StructureToPtr(waveFormat, ptr, false);
 
-    return ptr;
-}
+        return ptr;
+    }
 
     [DllImport("Mmdevapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
     private static extern int ActivateAudioInterfaceAsync(
@@ -305,7 +298,6 @@ private static IntPtr CreateWaveFormatExPtr(WaveFormat format)
     private sealed class CompletionHandler : IActivateAudioInterfaceCompletionHandler
     {
         private readonly ManualResetEventSlim completed = new(false);
-
         private int activateResult;
         private object? activatedInterface;
 
@@ -381,7 +373,7 @@ private static IntPtr CreateWaveFormatExPtr(WaveFormat format)
 
             return new PROPVARIANT
             {
-                vt = 65, // VT_BLOB
+                vt = 65,
                 blob = new BLOB
                 {
                     cbSize = size,

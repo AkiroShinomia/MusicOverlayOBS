@@ -12,18 +12,12 @@
 
       <div class="group">
         <h2>Темы</h2>
-
         <label>
           Готовая тема
           <select id="themePreset">
             <option value="Custom">Custom</option>
-            <option value="DarkGlass">Dark Glass</option>
-            <option value="AnimePink">Anime Pink</option>
-            <option value="Cyberpunk">Cyberpunk</option>
-            <option value="MinimalWhite">Minimal White</option>
           </select>
         </label>
-
         <button id="applyThemeBtn" class="secondary-btn">Применить тему</button>
       </div>
 
@@ -55,7 +49,6 @@
 
       <div class="group">
         <h2>Шрифт</h2>
-
         <label>
           Семейство
           <select id="fontFamily">
@@ -76,7 +69,6 @@
             <option value="Orbitron">Orbitron</option>
           </select>
         </label>
-
         <label><span class="drag-label" data-target="titleSize">Размер названия</span><input id="titleSize" type="number"></label>
         <label><span class="drag-label" data-target="artistSize">Размер артиста</span><input id="artistSize" type="number"></label>
         <label><span class="drag-label" data-target="tickerSize">Размер маленькой строки</span><input id="tickerSize" type="number"></label>
@@ -84,7 +76,6 @@
 
       <div class="group">
         <h2>Стиль маленькой строки</h2>
-
         <label>
           Вид строки
           <select id="tickerStyle">
@@ -96,126 +87,164 @@
           </select>
         </label>
       </div>
+
       <div class="group">
         <h2>Стиль большой карточки</h2>
-
         <label>
           Вид карточки
           <select id="fullCardStyle">
-          <option value="glass">Glass</option>
-          <option value="solid">Solid</option>
-          <option value="minimal">Minimal</option>
-          <option value="neon">Neon</option>
-          <option value="spotify">Spotify</option>
-        </select>
-      </label>
-    </div>
+            <option value="glass">Glass</option>
+            <option value="solid">Solid</option>
+            <option value="minimal">Minimal</option>
+            <option value="neon">Neon</option>
+            <option value="spotify">Spotify</option>
+          </select>
+        </label>
+      </div>
 
-    <div class="group">
-      <h2>Стиль пластинки</h2>
+      <div class="group">
+        <h2>Стиль пластинки</h2>
+        <label>
+          Вид пластинки
+          <select id="vinylStyle">
+            <option value="classic">Classic Vinyl</option>
+            <option value="black">Black Vinyl</option>
+            <option value="white">White Vinyl</option>
+            <option value="gold">Gold Vinyl</option>
+            <option value="transparent">Transparent Vinyl</option>
+            <option value="cd">CD Disc</option>
+          </select>
+        </label>
+      </div>
 
-      <label>
-        Вид пластинки
-        <select id="vinylStyle">
-          <option value="classic">Classic Vinyl</option>
-          <option value="black">Black Vinyl</option>
-          <option value="white">White Vinyl</option>
-          <option value="gold">Gold Vinyl</option>
-          <option value="transparent">Transparent Vinyl</option>
-          <option value="cd">CD Disc</option>
-        </select>
-      </label>
-    </div>
+      <div class="group">
+        <h2>Частицы</h2>
+        <label>
+          Включить частицы
+          <input id="particlesEnabled" type="checkbox">
+        </label>
+        <label>
+          Тип частиц
+          <select id="particlesStyle">
+            <option value="notes">Ноты</option>
+            <option value="stars">Звезды</option>
+            <option value="hearts">Сердца</option>
+            <option value="sparkles">Искры</option>
+            <option value="pixels">Пиксели</option>
+            <option value="crosses">Кресты</option>
+            <option value="invertedCrosses">Перевернутые кресты</option>
+          </select>
+        </label>
+        <label>
+          Цвет частиц
+          <input id="particlesColor" type="color">
+        </label>
+        <label>
+          Количество за раз
+          <input id="particlesCount" type="number">
+        </label>
+        <label>
+          Размер
+          <input id="particlesSize" type="number">
+        </label>
+        <label>
+          Длительность, мс
+          <input id="particlesDurationMs" type="number">
+        </label>
+      </div>
 
-    <div class="group">
-      <h2>Частицы</h2>
+      <div class="group">
+        <h2>Эквалайзер</h2>
+        <label>
+          Включить эквалайзер
+          <input id="equalizerEnabled" type="checkbox">
+        </label>
+        <label>
+          FFT Preset
+          <select id="fftPreset">
+            <option value="balanced">Balanced</option>
+            <option value="smooth">Smooth</option>
+            <option value="punchy">Punchy</option>
+            <option value="vocal">Vocal</option>
+            <option value="bass">Bass</option>
+            <option value="orchestra">Orchestra</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+        <label>
+          Стиль
+          <select id="equalizerStyle">
+            <option value="solid">Solid</option>
+            <option value="neon">Neon</option>
+            <option value="rainbow">Rainbow</option>
+            <option value="soft">Soft</option>
+            <option value="minimal">Minimal</option>
+          </select>
+        </label>
+        <label>
+          Цвет
+          <select id="equalizerColorMode">
+            <option value="progress">Цвет прогресса</option>
+            <option value="custom">Свой цвет</option>
+          </select>
+        </label>
+        <label>
+          Свой цвет
+          <input id="equalizerColor" type="color">
+        </label>
+        <label><span class="drag-label" data-target="equalizerBarCount">Количество полос</span><input id="equalizerBarCount" type="number" min="8" max="120"></label>
+        <label><span class="drag-label" data-target="equalizerBarWidth">Ширина полос</span><input id="equalizerBarWidth" type="number" min="1" max="20"></label>
+        <label><span class="drag-label" data-target="equalizerGap">Расстояние</span><input id="equalizerGap" type="number" min="0" max="20"></label>
+        <label><span class="drag-label" data-target="equalizerHeight">Высота</span><input id="equalizerHeight" type="number" min="10" max="200"></label>
+        <label><span class="drag-label" data-target="equalizerOffsetY">Отступ от строки</span><input id="equalizerOffsetY" type="number" min="-20" max="80"></label>
+        <label><span class="drag-label" data-target="equalizerSidePadding">Боковой отступ</span><input id="equalizerSidePadding" type="number" min="0" max="80"></label>
+        <label><span class="drag-label" data-target="equalizerSensitivity">Чувствительность x100</span><input id="equalizerSensitivity" type="number" min="10" max="500"></label>
+        <label><span class="drag-label" data-target="equalizerSmoothing">Плавность %</span><input id="equalizerSmoothing" type="number" min="0" max="95"></label>
 
-      <label>
-        Включить частицы
-        <input id="particlesEnabled" type="checkbox">
-      </label>
+        <details class="advanced-block">
+          <summary>Advanced FFT</summary>
+          <label>
+            Авто gain
+            <input id="equalizerAutoGain" type="checkbox">
+          </label>
+          <label>
+            <span class="drag-label" data-target="equalizerOutputGain">Manual Output Gain x100</span>
+            <input id="equalizerOutputGain" type="number" min="10" max="300">
+          </label>
+          <label>
+            <span class="drag-label" data-target="equalizerSpectralContrast">Spectral Contrast x100</span>
+            <input id="equalizerSpectralContrast" type="number" min="50" max="300">
+          </label>
+          <label>
+            <span class="drag-label" data-target="equalizerVisualCurvePower">Visual Curve Power x100</span>
+            <input id="equalizerVisualCurvePower" type="number" min="60" max="200">
+          </label>
+        </details>
 
-      <label>
-        Тип частиц
-        <select id="particlesStyle">
-          <option value="notes">Ноты</option>
-          <option value="stars">Звезды</option>
-          <option value="hearts">Сердца</option>
-          <option value="sparkles">Искры</option>
-          <option value="pixels">Пиксели</option>
-          <option value="crosses">Кресты</option>
-          <option value="invertedCrosses">Перевернутые кресты</option>
-        </select>
-      </label>
+        <label>
+          Glow
+          <input id="equalizerGlow" type="checkbox">
+        </label>
+        <label><span class="drag-label" data-target="equalizerGlowPower">Сила glow</span><input id="equalizerGlowPower" type="number" min="0" max="80"></label>
+      </div>
 
-      <label>
-        Цвет частиц
-        <input id="particlesColor" type="color">
-      </label>
-
-      <label>
-        Количество за раз
-        <input id="particlesCount" type="number">
-      </label>
-
-      <label>
-        Размер
-        <input id="particlesSize" type="number">
-      </label>
-
-      <label>
-        Длительность, мс
-        <input id="particlesDurationMs" type="number">
-      </label>
-  </div>
-  <div class="group">
-  <h2>Эквалайзер</h2>
-
-    <label>
-      Включить эквалайзер
-      <input id="equalizerEnabled" type="checkbox">
-    </label>
-
-    <label>
-      Стиль
-      <select id="equalizerStyle">
-        <option value="solid">Solid</option>
-        <option value="neon">Neon</option>
-        <option value="rainbow">Rainbow</option>
-        <option value="soft">Soft</option>
-        <option value="minimal">Minimal</option>
-      </select>
-      </label>
-
-    <label>
-      Цвет
-      <select id="equalizerColorMode">
-        <option value="progress">Цвет прогресса</option>
-        <option value="custom">Свой цвет</option>
-      </select>
-    </label>
-
-    <label>
-      Свой цвет
-      <input id="equalizerColor" type="color">
-    </label>
-
-    <label><span class="drag-label" data-target="equalizerBarCount">Количество полос</span><input id="equalizerBarCount" type="number" min="8" max="120"></label>
-    <label><span class="drag-label" data-target="equalizerBarWidth">Ширина полос</span><input id="equalizerBarWidth" type="number" min="1" max="20"></label>
-    <label><span class="drag-label" data-target="equalizerGap">Расстояние</span><input id="equalizerGap" type="number" min="0" max="20"></label>
-    <label><span class="drag-label" data-target="equalizerHeight">Высота</span><input id="equalizerHeight" type="number" min="10" max="200"></label>
-    <label><span class="drag-label" data-target="equalizerOffsetY">Отступ от строки</span><input id="equalizerOffsetY" type="number" min="-20" max="80"></label>
-    <label><span class="drag-label" data-target="equalizerSidePadding">Боковой отступ</span><input id="equalizerSidePadding" type="number" min="0" max="80"></label>
-    <label><span class="drag-label" data-target="equalizerSensitivity">Чувствительность x100</span><input id="equalizerSensitivity" type="number" min="10" max="500"></label>
-    <label><span class="drag-label" data-target="equalizerSmoothing">Плавность %</span><input id="equalizerSmoothing" type="number" min="0" max="95"></label>
-
-    <label>
-      Glow
-      <input id="equalizerGlow" type="checkbox">
-    </label>
-
-    <label><span class="drag-label" data-target="equalizerGlowPower">Сила glow</span><input id="equalizerGlowPower" type="number" min="0" max="80"></label>
-  </div>
+      <div class="group">
+        <h2>Аудио</h2>
+        <label>
+          Источник звука
+          <select id="audioSourceMode">
+            <option value="auto">Auto — процесс, fallback на систему</option>
+            <option value="process">Process — только процесс</option>
+            <option value="system">System — весь системный звук</option>
+          </select>
+        </label>
+        <div class="audio-status">
+          <div><b>Режим:</b> <span id="captureStatusMode">-</span></div>
+          <div><b>Источник:</b> <span id="captureStatusSource">-</span></div>
+          <div><b>PID:</b> <span id="captureStatusPid">-</span></div>
+          <div><b>Ошибка:</b> <span id="captureStatusError">-</span></div>
+        </div>
+      </div>
 
       <div class="group">
         <h2>Обложка</h2>
@@ -248,30 +277,30 @@
 
         <label>
           Скрытие большой карточки
-        <select id="fullExitAnimation">
-          <option value="slideDown">Slide Down</option>
-          <option value="slideUp">Slide Up</option>
-          <option value="slideLeft">Slide Left</option>
-          <option value="slideRight">Slide Right</option>
-          <option value="fade">Fade</option>
-          <option value="scale">Scale</option>
-          <option value="none">None</option>
-        </select>
-      </label>
+          <select id="fullExitAnimation">
+            <option value="slideDown">Slide Down</option>
+            <option value="slideUp">Slide Up</option>
+            <option value="slideLeft">Slide Left</option>
+            <option value="slideRight">Slide Right</option>
+            <option value="fade">Fade</option>
+            <option value="scale">Scale</option>
+            <option value="none">None</option>
+          </select>
+        </label>
 
-      <label>
-        Появление маленькой строки
-        <select id="tickerEnterAnimation">
-          <option value="slideUp">Slide Up</option>
-          <option value="slideDown">Slide Down</option>
-          <option value="slideLeft">Slide Left</option>
-          <option value="slideRight">Slide Right</option>
-          <option value="fade">Fade</option>
-        <option value="scale">Scale</option>
-          <option value="none">None</option>
-        </select>
-      </label>
-        
+        <label>
+          Появление маленькой строки
+          <select id="tickerEnterAnimation">
+            <option value="slideUp">Slide Up</option>
+            <option value="slideDown">Slide Down</option>
+            <option value="slideLeft">Slide Left</option>
+            <option value="slideRight">Slide Right</option>
+            <option value="fade">Fade</option>
+            <option value="scale">Scale</option>
+            <option value="none">None</option>
+          </select>
+        </label>
+
         <button id="playPreviewAnimationBtn" class="secondary-btn">
           Запустить предпросмотр
         </button>
@@ -310,11 +339,11 @@
           <div id="previewTickerTitle" class="preview-ticker-title">я не пойду с тобой гулять - Серега Пират</div>
           <div id="previewTickerTime" class="preview-ticker-time">00:42 / 02:56</div>
           <div id="previewTickerProgress" class="preview-progress">
-          <div id="previewEqualizer" class="preview-equalizer"></div>
-          <div class="preview-progress-bar"></div>
+            <div id="previewEqualizer" class="preview-equalizer"></div>
+            <div class="preview-progress-bar"></div>
+          </div>
         </div>
       </div>
-    </div>
 
       <p class="hint">Цифры можно менять перетаскиванием названия параметра влево/вправо.</p>
     </section>

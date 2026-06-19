@@ -10,12 +10,12 @@ const string CurrentVersion = "1.3.1";
 const string GitHubOwner = "AkiroShinomia";
 const string GitHubRepo = "MusicOverlayOBS";
 const string ReleaseAssetName = "MusicOverlayReady.zip";
-
 const string Url = "http://localhost:8799/";
 
 if (!args.Contains("--skip-update"))
 {
     bool updateStarted = await CheckForUpdatesAndRun();
+
     if (updateStarted)
         return;
 }
@@ -195,6 +195,18 @@ async Task HandleRequest(HttpListenerContext context)
 
         if (path == "/api/audiolevel")
         {
+            string sourceMode = GetAudioSourceMode();
+            audioLevelService.SetAudioSourceMode(sourceMode);
+
+            var fft = GetFftSettings();
+
+            audioLevelService.SetFftSettings(
+                fft.AutoGain,
+                fft.OutputGain,
+                fft.SpectralContrast,
+                fft.VisualCurvePower
+            );
+
             await SendJson(context, audioLevelService.GetAudioLevel("mediaSession"));
             return;
         }
@@ -244,7 +256,9 @@ async Task HandleRequest(HttpListenerContext context)
             context.Response.StatusCode = 500;
             await WriteText(context, ex.Message, "text/plain");
         }
-        catch { }
+        catch
+        {
+        }
     }
 }
 
@@ -354,7 +368,6 @@ async Task SaveConfig(HttpListenerContext context)
         });
 
         await File.WriteAllTextAsync(configPath, formatted, Encoding.UTF8);
-
         await SendJson(context, new { ok = true });
     }
     catch
@@ -400,6 +413,38 @@ string GetDefaultConfig()
   }
 }
 """;
+}
+
+string GetAudioSourceMode()
+{
+    try
+    {
+        if (!File.Exists(configPath))
+            return "auto";
+
+        string json = File.ReadAllText(configPath, Encoding.UTF8);
+        using var doc = JsonDocument.Parse(json);
+
+        if (
+            doc.RootElement.TryGetProperty("audio", out var audio) &&
+            audio.TryGetProperty("sourceMode", out var sourceModeProp)
+        )
+        {
+            string value = sourceModeProp.GetString() ?? "auto";
+
+            return value switch
+            {
+                "process" => "process",
+                "system" => "system",
+                _ => "auto"
+            };
+        }
+    }
+    catch
+    {
+    }
+
+    return "auto";
 }
 
 object GetThemes()
@@ -468,6 +513,65 @@ async Task WriteText(HttpListenerContext context, string text, string contentTyp
     context.Response.Close();
 }
 
+FftSettings GetFftSettings()
+{
+    try
+    {
+        if (!File.Exists(configPath))
+            return new FftSettings(true, 1.0, 1.0, 1.0);
+
+        string json = File.ReadAllText(configPath, Encoding.UTF8);
+
+        using var doc = JsonDocument.Parse(json);
+
+        if (!doc.RootElement.TryGetProperty("equalizer", out var eq))
+            return new FftSettings(true, 1.0, 1.0, 1.0);
+
+        bool autoGain = GetBool(eq, "autoGain", true);
+        double outputGain = GetDouble(eq, "outputGain", 1.0);
+        double spectralContrast = GetDouble(eq, "spectralContrast", 1.0);
+        double visualCurvePower = GetDouble(eq, "visualCurvePower", 1.0);
+
+        return new FftSettings(
+            autoGain,
+            outputGain,
+            spectralContrast,
+            visualCurvePower
+        );
+    }
+    catch
+    {
+        return new FftSettings(true, 1.0, 1.0, 1.0);
+    }
+}
+
+bool GetBool(JsonElement element, string name, bool fallback)
+{
+    if (
+        element.TryGetProperty(name, out var prop) &&
+        (prop.ValueKind == JsonValueKind.True || prop.ValueKind == JsonValueKind.False)
+    )
+    {
+        return prop.GetBoolean();
+    }
+
+    return fallback;
+}
+
+double GetDouble(JsonElement element, string name, double fallback)
+{
+    if (
+        element.TryGetProperty(name, out var prop) &&
+        prop.ValueKind == JsonValueKind.Number &&
+        prop.TryGetDouble(out double value)
+    )
+    {
+        return value;
+    }
+
+    return fallback;
+}
+
 string GetContentType(string path)
 {
     return Path.GetExtension(path).ToLowerInvariant() switch
@@ -482,3 +586,10 @@ string GetContentType(string path)
         _ => "application/octet-stream"
     };
 }
+
+public record FftSettings(
+    bool AutoGain,
+    double OutputGain,
+    double SpectralContrast,
+    double VisualCurvePower
+);

@@ -8,59 +8,14 @@ public static class AudioSessionHelper
         if (string.IsNullOrWhiteSpace(sourceAppId))
             return 0;
 
-        try
-        {
-            using var enumerator = new MMDeviceEnumerator();
-            using var device = enumerator.GetDefaultAudioEndpoint(
-                DataFlow.Render,
-                Role.Multimedia
-            );
-
-            var sessions = device.AudioSessionManager.Sessions;
-
-            for (int i = 0; i < sessions.Count; i++)
-            {
-                var session = sessions[i];
-
-                int processId;
-
-                try
-                {
-                    processId = (int)session.GetProcessID;
-                }
-                catch
-                {
-                    continue;
-                }
-
-                if (processId <= 0)
-                    continue;
-
-                string processName;
-
-                try
-                {
-                    using var process = Process.GetProcessById(processId);
-                    processName = process.ProcessName;
-                }
-                catch
-                {
-                    continue;
-                }
-
-                if (IsMatchingSource(processName, sourceAppId))
-                    return processId;
-            }
-        }
-        catch
-        {
-            return 0;
-        }
-
-        return 0;
+        var firstMatch = FindFirstMatchingSession(sourceAppId);
+        return firstMatch?.ProcessId ?? 0;
     }
 
-    public static double GetMediaSessionLevel(string sourceAppId, double fallbackLevel, double previousLevel)
+    public static double GetMediaSessionLevel(
+        string sourceAppId,
+        double fallbackLevel,
+        double previousLevel)
     {
         if (string.IsNullOrWhiteSpace(sourceAppId))
             return fallbackLevel;
@@ -68,58 +23,35 @@ public static class AudioSessionHelper
         try
         {
             using var enumerator = new MMDeviceEnumerator();
-            using var device = enumerator.GetDefaultAudioEndpoint(
-                DataFlow.Render,
-                Role.Multimedia
-            );
-
+            using var device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
             var sessions = device.AudioSessionManager.Sessions;
 
-            double bestLevel = 0;
+            double bestPeak = 0;
+            bool found = false;
 
             for (int i = 0; i < sessions.Count; i++)
             {
                 var session = sessions[i];
 
-                int processId;
-
-                try
-                {
-                    processId = (int)session.GetProcessID;
-                }
-                catch
-                {
-                    continue;
-                }
-
-                if (processId <= 0)
+                // Пытаемся безопасно получить PID и имя процесса
+                var sessionInfo = TryGetSessionInfo(session);
+                if (sessionInfo == null)
                     continue;
 
-                string processName;
-
-                try
-                {
-                    using var process = Process.GetProcessById(processId);
-                    processName = process.ProcessName;
-                }
-                catch
-                {
-                    continue;
-                }
-
-                if (!IsMatchingSource(processName, sourceAppId))
+                if (!IsMatchingSource(sessionInfo.ProcessName, sourceAppId))
                     continue;
 
-                double level = session.AudioMeterInformation.MasterPeakValue;
+                double peak = session.AudioMeterInformation.MasterPeakValue;
+                if (peak > bestPeak)
+                    bestPeak = peak;
 
-                if (level > bestLevel)
-                    bestLevel = level;
+                found = true;
             }
 
-            double smoothed =
-                previousLevel * 0.72 +
-                bestLevel * 0.28;
+            if (!found)
+                return fallbackLevel;
 
+            double smoothed = previousLevel * 0.72 + bestPeak * 0.28;
             return Math.Clamp(smoothed, 0, 1);
         }
         catch
@@ -130,21 +62,78 @@ public static class AudioSessionHelper
 
     public static bool IsMatchingSource(string processName, string sourceAppId)
     {
-        if (string.IsNullOrWhiteSpace(processName))
-            return false;
-
-        if (string.IsNullOrWhiteSpace(sourceAppId))
+        if (string.IsNullOrWhiteSpace(processName) || string.IsNullOrWhiteSpace(sourceAppId))
             return false;
 
         string process = processName.ToLowerInvariant();
         string source = sourceAppId.ToLowerInvariant();
 
-        if (source.Contains(process))
-            return true;
+        return source.Contains(process) || source.Contains(process + ".exe");
+    }
 
-        if (source.Contains(process + ".exe"))
-            return true;
 
-        return false;
+    private static SessionInfo? FindFirstMatchingSession(string sourceAppId)
+    {
+        try
+        {
+            using var enumerator = new MMDeviceEnumerator();
+            using var device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+            var sessions = device.AudioSessionManager.Sessions;
+
+            for (int i = 0; i < sessions.Count; i++)
+            {
+                var info = TryGetSessionInfo(sessions[i]);
+                if (info != null && IsMatchingSource(info.ProcessName, sourceAppId))
+                    return info;
+            }
+        }
+        catch
+        {
+            // Игнорируем ошибки получения списка сессий
+        }
+
+        return null;
+    }
+
+    private static SessionInfo? TryGetSessionInfo(AudioSessionControl session)
+    {
+        try
+        {
+            int processId = (int)session.GetProcessID;
+            if (processId <= 0)
+                return null;
+
+            string processName;
+            try
+            {
+                using var process = Process.GetProcessById(processId);
+                processName = process.ProcessName;
+            }
+            catch
+            {
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(processName))
+                return null;
+
+            return new SessionInfo(processId, processName);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private sealed class SessionInfo
+    {
+        public int ProcessId { get; }
+        public string ProcessName { get; }
+
+        public SessionInfo(int processId, string processName)
+        {
+            ProcessId = processId;
+            ProcessName = processName;
+        }
     }
 }
