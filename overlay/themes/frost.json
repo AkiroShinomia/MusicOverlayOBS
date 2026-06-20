@@ -1,0 +1,62 @@
+{
+  "id": "frost",
+  "name": "Frost",
+  "colors": {
+    "background": "rgba(10, 24, 34, 0.72)",
+    "text": "#e8fbff",
+    "progress": "#7fd7ff",
+    "progressBackground": "rgba(127, 215, 255, 0.22)"
+  },
+  "font": {
+    "family": "Segoe UI",
+    "titleSize": 25,
+    "artistSize": 16,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "glass"
+  },
+  "fullCard": {
+    "style": "glass"
+  },
+  "vinyl": {
+    "style": "transparent"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "sparkles",
+    "count": 2,
+    "size": 17,
+    "durationMs": 2400,
+    "color": "#b9efff"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "soft",
+    "barCount": 60,
+    "barWidth": 5,
+    "gap": 3,
+    "height": 76,
+    "offsetY": 1,
+    "sidePadding": 10,
+    "preset": "smooth",
+    "sensitivity": 1.08,
+    "smoothing": 0.78,
+    "autoGain": true,
+    "outputGain": 0.75,
+    "spectralContrast": 0.95,
+    "visualCurvePower": 1.15,
+    "glow": true,
+    "glowPower": 22,
+    "colorMode": "progress",
+    "color": "#7fd7ff"
+  },
+  "audio": {
+    "sourceMode": "auto"
+  },
+  "animations": {
+    "fullEnter": "fade",
+    "fullExit": "fade",
+    "tickerEnter": "slideUp"
+  }
+}

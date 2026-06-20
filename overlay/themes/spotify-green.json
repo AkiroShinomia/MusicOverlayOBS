@@ -1,0 +1,62 @@
+{
+  "id": "spotify-green",
+  "name": "Spotify Green",
+  "colors": {
+    "background": "rgba(12, 18, 14, 0.88)",
+    "text": "#ffffff",
+    "progress": "#1db954",
+    "progressBackground": "rgba(29, 185, 84, 0.22)"
+  },
+  "font": {
+    "family": "Arial",
+    "titleSize": 25,
+    "artistSize": 16,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "pill"
+  },
+  "fullCard": {
+    "style": "spotify"
+  },
+  "vinyl": {
+    "style": "black"
+  },
+  "particles": {
+    "enabled": false,
+    "style": "notes",
+    "count": 1,
+    "size": 16,
+    "durationMs": 1800,
+    "color": "#1db954"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "solid",
+    "barCount": 48,
+    "barWidth": 5,
+    "gap": 3,
+    "height": 68,
+    "offsetY": 0,
+    "sidePadding": 18,
+    "preset": "balanced",
+    "sensitivity": 1.1,
+    "smoothing": 0.68,
+    "autoGain": true,
+    "outputGain": 0.7,
+    "spectralContrast": 1.15,
+    "visualCurvePower": 1,
+    "glow": false,
+    "glowPower": 12,
+    "colorMode": "progress",
+    "color": "#1db954"
+  },
+  "audio": {
+    "sourceMode": "auto"
+  },
+  "animations": {
+    "fullEnter": "slideLeft",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp"
+  }
+}

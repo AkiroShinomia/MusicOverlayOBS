@@ -1,0 +1,62 @@
+{
+  "id": "blood-moon",
+  "name": "Blood Moon",
+  "colors": {
+    "background": "rgba(18, 4, 6, 0.90)",
+    "text": "#ffe2e2",
+    "progress": "#ff2b3d",
+    "progressBackground": "rgba(255, 43, 61, 0.22)"
+  },
+  "font": {
+    "family": "Trebuchet MS",
+    "titleSize": 25,
+    "artistSize": 16,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "glass"
+  },
+  "fullCard": {
+    "style": "neon"
+  },
+  "vinyl": {
+    "style": "bloodMoon"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "crosses",
+    "count": 2,
+    "size": 18,
+    "durationMs": 2400,
+    "color": "#ff2b3d"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "neon",
+    "barCount": 60,
+    "barWidth": 5,
+    "gap": 3,
+    "height": 82,
+    "offsetY": 1,
+    "sidePadding": 8,
+    "preset": "bass",
+    "sensitivity": 1.3,
+    "smoothing": 0.58,
+    "autoGain": true,
+    "outputGain": 0.72,
+    "spectralContrast": 1.45,
+    "visualCurvePower": 0.92,
+    "glow": true,
+    "glowPower": 34,
+    "colorMode": "progress",
+    "color": "#ff2b3d"
+  },
+  "audio": {
+    "sourceMode": "auto"
+  },
+  "animations": {
+    "fullEnter": "slideDown",
+    "fullExit": "slideDown",
+    "tickerEnter": "fade"
+  }
+}

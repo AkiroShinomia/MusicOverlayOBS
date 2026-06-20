@@ -1,0 +1,62 @@
+{
+  "id": "retro-synthwave",
+  "name": "Retro Synthwave",
+  "colors": {
+    "background": "rgba(19, 0, 31, 0.86)",
+    "text": "#fff1ff",
+    "progress": "#ff3ea5",
+    "progressBackground": "rgba(255, 62, 165, 0.22)"
+  },
+  "font": {
+    "family": "Orbitron",
+    "titleSize": 24,
+    "artistSize": 15,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "glass"
+  },
+  "fullCard": {
+    "style": "neon"
+  },
+  "vinyl": {
+    "style": "cd"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "stars",
+    "count": 2,
+    "size": 17,
+    "durationMs": 2100,
+    "color": "#00f7ff"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "rainbow",
+    "barCount": 72,
+    "barWidth": 5,
+    "gap": 2,
+    "height": 80,
+    "offsetY": 1,
+    "sidePadding": 8,
+    "preset": "punchy",
+    "sensitivity": 1.32,
+    "smoothing": 0.52,
+    "autoGain": true,
+    "outputGain": 0.75,
+    "spectralContrast": 1.6,
+    "visualCurvePower": 0.92,
+    "glow": true,
+    "glowPower": 30,
+    "colorMode": "custom",
+    "color": "#00f7ff"
+  },
+  "audio": {
+    "sourceMode": "auto"
+  },
+  "animations": {
+    "fullEnter": "slideLeft",
+    "fullExit": "slideRight",
+    "tickerEnter": "slideUp"
+  }
+}

@@ -38,6 +38,9 @@ const manualFftFields = new Set([
 let availableThemes = [];
 let loadedThemes = {};
 let currentDefaultCover = defaultConfig.albumArt.defaultCover;
+let activeThemeId = null;
+let activeThemeType = null;
+let themeDirty = false;
 
 const statusEl = document.getElementById("status");
 
@@ -237,17 +240,19 @@ function fillForm(config) {
 }
 
 function readForm() {
-  const config = { ...defaultConfig };
+  const config = structuredClone(defaultConfig);
 
   setNestedValue(config, "theme.preset", val("themePreset") || "Custom");
 
   fieldMappings.forEach(({ id, path }) => {
-    setNestedValue(config, path, val(id));
-  });
-
-  booleanFields.forEach(({ id, path }) => {
     const el = $(id);
-    if (el) setNestedValue(config, path, el.checked);
+    if (!el) return;
+
+    const value = el.type === "number"
+      ? Number(el.value)
+      : el.value;
+
+    setNestedValue(config, path, value);
   });
 
   // colors
@@ -332,7 +337,7 @@ function applyPreviewCardStyle(style) {
 }
 
 function applyPreviewVinylStyle(style) {
-  const classes = ["preview-vinyl-style-classic", "preview-vinyl-style-black", "preview-vinyl-style-white", "preview-vinyl-style-gold", "preview-vinyl-style-transparent", "preview-vinyl-style-cd"];
+  const classes = ["preview-vinyl-style-classic", "preview-vinyl-style-black", "preview-vinyl-style-white", "preview-vinyl-style-gold", "preview-vinyl-style-transparent", "preview-vinyl-style-cd","preview-vinyl-style-bloodMoon"];
   previewVinyl.classList.remove(...classes);
   previewVinyl.classList.add(`preview-vinyl-style-${style}`);
 }
@@ -439,15 +444,25 @@ async function getThemePreset(id) {
 
 async function applyThemePreset() {
   const presetName = val("themePreset");
+  const meta = getCurrentThemeMeta();
   const preset = await getThemePreset(presetName);
 
   if (!preset) {
+    activeThemeId = null;
+    activeThemeType = null;
+    themeDirty = false;
+
     const config = readForm();
     config.theme.preset = "Custom";
     fillForm(config);
     updatePreview(config);
+    updateThemeControls();
     return;
   }
+
+  activeThemeId = meta?.id || presetName;
+  activeThemeType = meta?.type || "builtin";
+  themeDirty = false;
 
   const current = readForm();
   const next = mergeConfig(current, {
@@ -458,10 +473,13 @@ async function applyThemePreset() {
     fullCard: preset.fullCard,
     vinyl: preset.vinyl,
     particles: preset.particles,
-    equalizer: preset.equalizer
+    equalizer: preset.equalizer,
+    audio: preset.audio,
+    animations: preset.animations
   });
   fillForm(next);
   updatePreview(next);
+  updateThemeControls();
 }
 
 function applyFftPresetToForm(presetName) {
@@ -484,6 +502,13 @@ async function loadConfig() {
     const config = mergeConfig(defaultConfig, loaded);
     fillForm(config);
     updatePreview(config);
+    const meta = getCurrentThemeMeta();
+
+    activeThemeId = meta?.id || null;
+    activeThemeType = meta?.type || null;
+    themeDirty = false;
+
+    updateThemeControls();
   } catch (e) {
     console.error(e);
     fillForm(defaultConfig);
@@ -530,8 +555,12 @@ function setupDragNumbers() {
       input.value = Math.round(startValue + diff * step);
 
       const config = readForm();
-      config.theme.preset = "Custom";
-      set("themePreset", "Custom");
+
+      if (input.id !== "themePreset") {
+        config.theme.preset = "Custom";
+        markThemeDirty();
+      }
+
       updatePreview(config);
     });
 
@@ -555,25 +584,234 @@ async function updateAudioStatus() {
   } catch {}
 }
 
+function setupCollapsibleSections() {
+  const storageKey = "musicOverlay.settings.sections";
+
+  let savedState = {};
+
+  try {
+    savedState = JSON.parse(localStorage.getItem(storageKey) || "{}");
+  } catch {
+    savedState = {};
+  }
+
+  const groups = document.querySelectorAll(".panel > .group");
+
+  groups.forEach((group, index) => {
+    const title = group.querySelector("h2");
+    if (!title) return;
+
+    const rawTitle = title.textContent.trim();
+    const sectionKey = `${index}-${rawTitle}`;
+    const defaultExpanded = [
+      "Темы"
+    ];
+
+    group.classList.add("settings-section");
+    group.dataset.sectionKey = sectionKey;
+
+    title.setAttribute("role", "button");
+    title.setAttribute("tabindex", "0");
+
+    const hasSavedState = sectionKey in savedState;
+
+    const isCollapsed = hasSavedState
+      ? savedState[sectionKey]
+      : !defaultExpanded.includes(rawTitle);
+
+    group.classList.toggle("is-collapsed", isCollapsed);
+
+    const toggle = () => {
+      const collapsed = !group.classList.contains("is-collapsed");
+
+      group.classList.toggle("is-collapsed", collapsed);
+
+      savedState[sectionKey] = collapsed;
+      localStorage.setItem(storageKey, JSON.stringify(savedState));
+    };
+
+    title.addEventListener("click", toggle);
+
+    title.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      }
+    });
+  });
+}
+
+function getCurrentThemeMeta() {
+  const id = val("themePreset");
+
+  if (!id || id === "Custom") {
+    return null;
+  }
+
+  return availableThemes.find(theme => theme.id === id) || null;
+}
+
+function updateThemeControls() {
+  const customControls = $("customThemeControls");
+  const updateBtn = $("updateCustomThemeBtn");
+
+  if (!customControls || !updateBtn) return;
+
+  const canSaveAsNew = themeDirty;
+  const canUpdateCurrent =
+    themeDirty &&
+    activeThemeType === "custom" &&
+    activeThemeId;
+
+  customControls.classList.toggle("is-visible", canSaveAsNew);
+  updateBtn.classList.toggle("is-visible", canUpdateCurrent);
+}
+
+function markThemeDirty() {
+  themeDirty = true;
+
+  const currentMeta = getCurrentThemeMeta();
+
+  if (currentMeta) {
+    activeThemeId = currentMeta.id;
+    activeThemeType = currentMeta.type;
+  }
+
+  if (activeThemeType !== "custom") {
+    set("themePreset", "Custom");
+  }
+
+  updateThemeControls();
+}
+
+function createThemePayload(config) {
+  return {
+    colors: config.colors,
+    font: config.font,
+    ticker: config.ticker,
+    fullCard: config.fullCard,
+    vinyl: config.vinyl,
+    particles: config.particles,
+    equalizer: config.equalizer,
+    audio: config.audio,
+    animations: config.animations
+  };
+}
+
+async function saveCustomTheme() {
+  const name = val("customThemeName").trim();
+
+  if (!name) {
+    statusEl.textContent = "Введите название темы.";
+    return;
+  }
+
+  const config = readForm();
+
+  const res = await fetch("/api/themes/custom", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name,
+      theme: createThemePayload(config)
+    })
+  });
+
+  const result = await res.json();
+
+  if (!result.ok) {
+    statusEl.textContent = result.error || "Не удалось сохранить тему.";
+    return;
+  }
+
+  statusEl.textContent = "Тема сохранена.";
+
+  $("customThemeName").value = "";
+
+  await loadThemes();
+
+  set("themePreset", result.id);
+
+  activeThemeId = result.id;
+  activeThemeType = "custom";
+  themeDirty = false;
+
+  updateThemeControls();
+}
+
+async function updateCustomTheme() {
+  if (!activeThemeId || activeThemeType !== "custom") {
+    statusEl.textContent = "Выбрана не пользовательская тема.";
+    return;
+  }
+
+  const themeId = activeThemeId.replace("custom/", "");
+  const config = readForm();
+
+  const res = await fetch(`/api/themes/custom/${themeId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      theme: createThemePayload(config)
+    })
+  });
+
+  const result = await res.json();
+
+  if (!result.ok) {
+    statusEl.textContent = result.error || "Не удалось обновить тему.";
+    return;
+  }
+
+  statusEl.textContent = "Изменения темы сохранены.";
+
+  themeDirty = false;
+
+  await loadThemes();
+
+  set("themePreset", activeThemeId);
+  updateThemeControls();
+}
+
 // --- Event wiring ---
 document.querySelectorAll("input, select").forEach(input => {
   input.addEventListener("input", () => {
+    if (input.id === "themePreset") {
+      return;
+    }
+
+    if (input.id === "customThemeName") {
+      return;
+    }
+
     if (input.id === "fftPreset") {
       applyFftPresetToForm(input.value);
     }
+
     if (manualFftFields.has(input.id)) {
       set("fftPreset", "custom");
     }
 
+    markThemeDirty();
+
     const config = readForm();
-    config.theme.preset = "Custom";
-    if (input.id !== "themePreset") set("themePreset", "Custom");
+
+    if (activeThemeType !== "custom") {
+      config.theme.preset = "Custom";
+    }
+
     updatePreview(config);
   });
 });
 
 $("applyThemeBtn").addEventListener("click", applyThemePreset);
 $("themePreset").addEventListener("change", applyThemePreset);
+$("saveCustomThemeBtn").addEventListener("click", saveCustomTheme);
+$("updateCustomThemeBtn").addEventListener("click", updateCustomTheme);
 
 $("defaultCoverFile").addEventListener("change", async e => {
   const file = e.target.files[0];
@@ -613,7 +851,9 @@ setInterval(() => {
 }, 140);
 
 // --- Init ---
+setupCollapsibleSections();
 setupDragNumbers();
+
 (async () => {
   await loadThemes();
   await loadConfig();

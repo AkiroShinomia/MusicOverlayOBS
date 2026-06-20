@@ -1,0 +1,62 @@
+{
+  "id": "terminal",
+  "name": "Terminal",
+  "colors": {
+    "background": "rgba(0, 10, 6, 0.88)",
+    "text": "#9cffc7",
+    "progress": "#00ff88",
+    "progressBackground": "rgba(0, 255, 136, 0.20)"
+  },
+  "font": {
+    "family": "Consolas",
+    "titleSize": 23,
+    "artistSize": 15,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "thin"
+  },
+  "fullCard": {
+    "style": "minimal"
+  },
+  "vinyl": {
+    "style": "black"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "pixels",
+    "count": 2,
+    "size": 14,
+    "durationMs": 1700,
+    "color": "#00ff88"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "minimal",
+    "barCount": 48,
+    "barWidth": 4,
+    "gap": 3,
+    "height": 62,
+    "offsetY": 0,
+    "sidePadding": 4,
+    "preset": "balanced",
+    "sensitivity": 1.05,
+    "smoothing": 0.62,
+    "autoGain": true,
+    "outputGain": 0.7,
+    "spectralContrast": 1.25,
+    "visualCurvePower": 1,
+    "glow": false,
+    "glowPower": 0,
+    "colorMode": "progress",
+    "color": "#00ff88"
+  },
+  "audio": {
+    "sourceMode": "system"
+  },
+  "animations": {
+    "fullEnter": "fade",
+    "fullExit": "fade",
+    "tickerEnter": "fade"
+  }
+}

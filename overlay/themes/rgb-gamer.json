@@ -1,0 +1,62 @@
+{
+  "id": "rgb-gamer",
+  "name": "RGB Gamer",
+  "colors": {
+    "background": "rgba(8, 8, 12, 0.86)",
+    "text": "#ffffff",
+    "progress": "#00d9ff",
+    "progressBackground": "rgba(0, 217, 255, 0.22)"
+  },
+  "font": {
+    "family": "Impact",
+    "titleSize": 25,
+    "artistSize": 16,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "glass"
+  },
+  "fullCard": {
+    "style": "neon"
+  },
+  "vinyl": {
+    "style": "cd"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "pixels",
+    "count": 3,
+    "size": 16,
+    "durationMs": 1800,
+    "color": "#00d9ff"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "rainbow",
+    "barCount": 80,
+    "barWidth": 5,
+    "gap": 2,
+    "height": 86,
+    "offsetY": 1,
+    "sidePadding": 8,
+    "preset": "punchy",
+    "sensitivity": 1.35,
+    "smoothing": 0.45,
+    "autoGain": true,
+    "outputGain": 0.75,
+    "spectralContrast": 1.75,
+    "visualCurvePower": 0.88,
+    "glow": true,
+    "glowPower": 36,
+    "colorMode": "progress",
+    "color": "#00d9ff"
+  },
+  "audio": {
+    "sourceMode": "auto"
+  },
+  "animations": {
+    "fullEnter": "scale",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp"
+  }
+}

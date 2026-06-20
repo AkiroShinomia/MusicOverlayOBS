@@ -1,0 +1,62 @@
+{
+  "id": "gold-luxury",
+  "name": "Gold Luxury",
+  "colors": {
+    "background": "rgba(20, 15, 6, 0.88)",
+    "text": "#fff4c2",
+    "progress": "#ffd65a",
+    "progressBackground": "rgba(255, 214, 90, 0.24)"
+  },
+  "font": {
+    "family": "Georgia",
+    "titleSize": 25,
+    "artistSize": 16,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "glass"
+  },
+  "fullCard": {
+    "style": "solid"
+  },
+  "vinyl": {
+    "style": "gold"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "sparkles",
+    "count": 2,
+    "size": 18,
+    "durationMs": 2300,
+    "color": "#ffd65a"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "neon",
+    "barCount": 56,
+    "barWidth": 5,
+    "gap": 3,
+    "height": 74,
+    "offsetY": 1,
+    "sidePadding": 10,
+    "preset": "orchestra",
+    "sensitivity": 1.08,
+    "smoothing": 0.72,
+    "autoGain": true,
+    "outputGain": 0.72,
+    "spectralContrast": 1.35,
+    "visualCurvePower": 1.18,
+    "glow": true,
+    "glowPower": 26,
+    "colorMode": "progress",
+    "color": "#ffd65a"
+  },
+  "audio": {
+    "sourceMode": "auto"
+  },
+  "animations": {
+    "fullEnter": "scale",
+    "fullExit": "fade",
+    "tickerEnter": "slideUp"
+  }
+}

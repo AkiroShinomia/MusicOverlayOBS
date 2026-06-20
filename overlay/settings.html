@@ -18,7 +18,18 @@
             <option value="Custom">Custom</option>
           </select>
         </label>
-        <button id="applyThemeBtn" class="secondary-btn">Применить тему</button>
+        <div class="theme-actions">
+          <button id="applyThemeBtn" class="secondary-btn">Применить тему</button>
+
+          <button id="updateCustomThemeBtn" class="secondary-btn theme-extra-action">
+            Сохранить изменения
+          </button>
+        </div>
+
+        <div id="customThemeControls" class="custom-theme-controls">
+          <input id="customThemeName" type="text" placeholder="Название темы">
+          <button id="saveCustomThemeBtn" class="secondary-btn">Сохранить как тему</button>
+        </div>
       </div>
 
       <div class="group">
@@ -113,6 +124,7 @@
             <option value="gold">Gold Vinyl</option>
             <option value="transparent">Transparent Vinyl</option>
             <option value="cd">CD Disc</option>
+            <option value="bloodMoon">Blood Moon</option>
           </select>
         </label>
       </div>

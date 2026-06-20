@@ -185,6 +185,7 @@ async Task HandleRequest(HttpListenerContext context)
     try
     {
         string path = context.Request.Url?.AbsolutePath ?? "/";
+        string method = context.Request.HttpMethod;
 
         if (path == "/api/nowplaying")
         {
@@ -214,6 +215,21 @@ async Task HandleRequest(HttpListenerContext context)
         if (path == "/api/themes")
         {
             await SendJson(context, GetThemes());
+            return;
+        }
+
+        if (path == "/api/themes/custom" && method == "POST")
+        {
+            await SaveCustomTheme(context);
+            return;
+        }
+
+        if (
+            path.StartsWith("/api/themes/custom/") &&
+            method == "PUT"
+            )
+        {
+            await UpdateCustomTheme(context);
             return;
         }
 
@@ -450,47 +466,289 @@ string GetAudioSourceMode()
 object GetThemes()
 {
     string themesDir = Path.Combine(overlayDir, "themes");
+    string customThemesDir = Path.Combine(themesDir, "custom");
 
-    if (!Directory.Exists(themesDir))
+    Directory.CreateDirectory(themesDir);
+    Directory.CreateDirectory(customThemesDir);
+
+    var result = new List<object>();
+
+    result.AddRange(
+        GetThemeFiles(
+            themesDir,
+            "builtin",
+            "/themes/"
+        )
+    );
+
+    result.AddRange(
+        GetThemeFiles(
+            customThemesDir,
+            "custom",
+            "/themes/custom/"
+        )
+    );
+
+    return result;
+}
+
+async Task SaveCustomTheme(HttpListenerContext context)
+{
+    try
     {
-        Directory.CreateDirectory(themesDir);
-        return Array.Empty<object>();
-    }
+        using var reader = new StreamReader(
+            context.Request.InputStream,
+            context.Request.ContentEncoding
+        );
 
-    return Directory
-        .GetFiles(themesDir, "*.json")
-        .Select(file =>
+        string body = await reader.ReadToEndAsync();
+
+        using var doc = JsonDocument.Parse(body);
+
+        JsonElement root = doc.RootElement;
+
+        if (!root.TryGetProperty("name", out var nameProp))
         {
-            string fileName = Path.GetFileName(file);
-            string id = Path.GetFileNameWithoutExtension(file);
-
-            try
+            await SendJson(context, new
             {
-                string json = File.ReadAllText(file, Encoding.UTF8);
-                using var doc = JsonDocument.Parse(json);
+                ok = false,
+                error = "Theme name is required"
+            });
+            return;
+        }
 
-                string name = doc.RootElement.TryGetProperty("name", out var nameProp)
-                    ? nameProp.GetString() ?? id
-                    : id;
-
-                return new
-                {
-                    id,
-                    name,
-                    path = $"/themes/{fileName}"
-                };
-            }
-            catch
+        if (!root.TryGetProperty("theme", out var themeProp))
+        {
+            await SendJson(context, new
             {
-                return new
-                {
-                    id,
-                    name = $"{id} (invalid)",
-                    path = $"/themes/{fileName}"
-                };
+                ok = false,
+                error = "Theme data is required"
+            });
+            return;
+        }
+
+        string name = nameProp.GetString()?.Trim() ?? "";
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            await SendJson(context, new
+            {
+                ok = false,
+                error = "Theme name is empty"
+            });
+            return;
+        }
+
+        string id = NormalizeThemeId(name);
+
+        string themesDir = Path.Combine(overlayDir, "themes");
+        string customThemesDir = Path.Combine(themesDir, "custom");
+
+        Directory.CreateDirectory(customThemesDir);
+
+        string filePath = Path.Combine(customThemesDir, $"{id}.json");
+
+        if (File.Exists(filePath))
+        {
+            await SendJson(context, new
+            {
+                ok = false,
+                error = "Theme already exists",
+                id = $"custom/{id}"
+            });
+            return;
+        }
+
+        var output = new
+        {
+            id,
+            name,
+            type = "custom",
+            version = "1.3.4",
+
+            colors = GetOptionalElement(themeProp, "colors"),
+            font = GetOptionalElement(themeProp, "font"),
+            ticker = GetOptionalElement(themeProp, "ticker"),
+            fullCard = GetOptionalElement(themeProp, "fullCard"),
+            vinyl = GetOptionalElement(themeProp, "vinyl"),
+            particles = GetOptionalElement(themeProp, "particles"),
+            equalizer = GetOptionalElement(themeProp, "equalizer"),
+            audio = GetOptionalElement(themeProp, "audio"),
+            animations = GetOptionalElement(themeProp, "animations")
+        };
+
+        string json = JsonSerializer.Serialize(
+            output,
+            new JsonSerializerOptions
+            {
+                WriteIndented = true
             }
-        })
-        .ToArray();
+        );
+
+        await File.WriteAllTextAsync(filePath, json, Encoding.UTF8);
+
+        await SendJson(context, new
+        {
+            ok = true,
+            id = $"custom/{id}",
+            name,
+            type = "custom",
+            path = $"/themes/custom/{id}.json"
+        });
+    }
+    catch (Exception ex)
+    {
+        await SendJson(context, new
+        {
+            ok = false,
+            error = ex.Message
+        });
+    }
+}
+
+async Task UpdateCustomTheme(HttpListenerContext context)
+{
+    try
+    {
+        string path =
+            context.Request.Url?.AbsolutePath ?? "";
+
+        string themeId =
+            path.Replace("/api/themes/custom/", "");
+
+        themeId = themeId.Trim();
+
+        if (string.IsNullOrWhiteSpace(themeId))
+        {
+            await SendJson(context, new
+            {
+                ok = false,
+                error = "Theme id is required"
+            });
+
+            return;
+        }
+
+        string themesDir =
+            Path.Combine(
+                overlayDir,
+                "themes",
+                "custom"
+            );
+
+        string filePath =
+            Path.Combine(
+                themesDir,
+                $"{themeId}.json"
+            );
+
+        if (!File.Exists(filePath))
+        {
+            await SendJson(context, new
+            {
+                ok = false,
+                error = "Theme not found"
+            });
+
+            return;
+        }
+
+        using var reader =
+            new StreamReader(
+                context.Request.InputStream,
+                context.Request.ContentEncoding
+            );
+
+        string body =
+            await reader.ReadToEndAsync();
+
+        using var doc =
+            JsonDocument.Parse(body);
+
+        JsonElement root =
+            doc.RootElement;
+
+        if (
+            !root.TryGetProperty(
+                "theme",
+                out var themeProp
+            )
+        )
+        {
+            await SendJson(context, new
+            {
+                ok = false,
+                error = "Theme data is required"
+            });
+
+            return;
+        }
+
+        string existingJson =
+            await File.ReadAllTextAsync(
+                filePath,
+                Encoding.UTF8
+            );
+
+        using var existingDoc =
+            JsonDocument.Parse(existingJson);
+
+        string name =
+            existingDoc.RootElement.TryGetProperty(
+                "name",
+                out var nameProp
+            )
+            ? nameProp.GetString() ?? themeId
+            : themeId;
+
+        var output = new
+        {
+            id = themeId,
+            name,
+            type = "custom",
+            version = "1.3.4",
+
+            colors = GetOptionalElement(themeProp, "colors"),
+            font = GetOptionalElement(themeProp, "font"),
+            ticker = GetOptionalElement(themeProp, "ticker"),
+            fullCard = GetOptionalElement(themeProp, "fullCard"),
+            vinyl = GetOptionalElement(themeProp, "vinyl"),
+            particles = GetOptionalElement(themeProp, "particles"),
+            equalizer = GetOptionalElement(themeProp, "equalizer"),
+            audio = GetOptionalElement(themeProp, "audio"),
+            animations = GetOptionalElement(themeProp, "animations")
+        };
+
+        string json =
+            JsonSerializer.Serialize(
+                output,
+                new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                }
+            );
+
+        await File.WriteAllTextAsync(
+            filePath,
+            json,
+            Encoding.UTF8
+        );
+
+        await SendJson(context, new
+        {
+            ok = true,
+            id = $"custom/{themeId}",
+            name
+        });
+    }
+    catch (Exception ex)
+    {
+        await SendJson(context, new
+        {
+            ok = false,
+            error = ex.Message
+        });
+    }
 }
 
 async Task SendJson(HttpListenerContext context, object data)
@@ -585,6 +843,103 @@ string GetContentType(string path)
         ".svg" => "image/svg+xml",
         _ => "application/octet-stream"
     };
+}
+
+IEnumerable<object> GetThemeFiles(
+    string directory,
+    string type,
+    string urlPrefix
+)
+{
+    return Directory
+        .GetFiles(directory, "*.json")
+        .Select(file =>
+        {
+            string fileName = Path.GetFileName(file);
+            string id = Path.GetFileNameWithoutExtension(file);
+
+            try
+            {
+                string json = File.ReadAllText(file, Encoding.UTF8);
+
+                using var doc = JsonDocument.Parse(json);
+
+                string name =
+                    doc.RootElement.TryGetProperty("name", out var nameProp)
+                    ? nameProp.GetString() ?? id
+                    : id;
+
+                return new
+                {
+                    id = type == "custom"
+                        ? $"custom/{id}"
+                        : id,
+
+                    name,
+                    type,
+
+                    path = $"{urlPrefix}{fileName}"
+                };
+            }
+            catch
+            {
+                return new
+                {
+                    id,
+                    name = $"{id} (invalid)",
+                    type,
+
+                    path = $"{urlPrefix}{fileName}"
+                };
+            }
+        });
+}
+
+string NormalizeThemeId(string name)
+{
+    string value = name
+        .Trim()
+        .ToLowerInvariant();
+
+    var builder = new StringBuilder();
+
+    foreach (char c in value)
+    {
+        if (char.IsLetterOrDigit(c))
+        {
+            builder.Append(c);
+        }
+        else if (c == ' ' || c == '-' || c == '_')
+        {
+            builder.Append('-');
+        }
+    }
+
+    string id = builder.ToString();
+
+    while (id.Contains("--"))
+    {
+        id = id.Replace("--", "-");
+    }
+
+    id = id.Trim('-');
+
+    if (string.IsNullOrWhiteSpace(id))
+    {
+        id = $"theme-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+    }
+
+    return id;
+}
+
+object? GetOptionalElement(JsonElement root, string name)
+{
+    if (root.TryGetProperty(name, out var prop))
+    {
+        return JsonSerializer.Deserialize<object>(prop.GetRawText());
+    }
+
+    return null;
 }
 
 public record FftSettings(

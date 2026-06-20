@@ -1,0 +1,62 @@
+{
+  "id": "neon-purple",
+  "name": "Neon Purple",
+  "colors": {
+    "background": "rgba(10, 8, 22, 0.86)",
+    "text": "#f3e8ff",
+    "progress": "#b74cff",
+    "progressBackground": "rgba(183, 76, 255, 0.24)"
+  },
+  "font": {
+    "family": "Orbitron",
+    "titleSize": 24,
+    "artistSize": 15,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "glass"
+  },
+  "fullCard": {
+    "style": "neon"
+  },
+  "vinyl": {
+    "style": "transparent"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "sparkles",
+    "count": 2,
+    "size": 18,
+    "durationMs": 2100,
+    "color": "#b74cff"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "neon",
+    "barCount": 64,
+    "barWidth": 5,
+    "gap": 3,
+    "height": 82,
+    "offsetY": 1,
+    "sidePadding": 8,
+    "preset": "punchy",
+    "sensitivity": 1.28,
+    "smoothing": 0.56,
+    "autoGain": true,
+    "outputGain": 0.75,
+    "spectralContrast": 1.6,
+    "visualCurvePower": 0.95,
+    "glow": true,
+    "glowPower": 32,
+    "colorMode": "progress",
+    "color": "#b74cff"
+  },
+  "audio": {
+    "sourceMode": "auto"
+  },
+  "animations": {
+    "fullEnter": "slideLeft",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp"
+  }
+}
