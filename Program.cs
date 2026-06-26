@@ -5,8 +5,10 @@ using System.Text;
 using System.Text.Json;
 using Windows.Media.Control;
 using Windows.Storage.Streams;
+using System.Net.WebSockets;
+using System.Collections.Concurrent;
 
-const string CurrentVersion = "1.4.1";
+const string CurrentVersion = "1.4.2";
 const string GitHubOwner = "AkiroShinomia";
 const string GitHubRepo = "MusicOverlayOBS";
 const string ReleaseAssetName = "MusicOverlayReady.zip";
@@ -24,6 +26,7 @@ string overlayDir = Path.Combine(Directory.GetCurrentDirectory(), "overlay");
 string configPath = Path.Combine(overlayDir, "config.json");
 AudioLevelService audioLevelService = new();
 audioLevelService.Start();
+ConcurrentDictionary<Guid, WebSocket> webSocketClients = new();
 
 Console.Title = $"Music Overlay v{CurrentVersion}";
 Console.WriteLine($"MusicOverlay v{CurrentVersion} запущен");
@@ -223,6 +226,11 @@ async Task HandleRequest(HttpListenerContext context)
             await SaveCustomTheme(context);
             return;
         }
+        if (path == "/ws")
+        {
+            await HandleWebSocket(context);
+            return;
+        }
 
         if (
             path.StartsWith("/api/themes/custom/") &&
@@ -384,6 +392,7 @@ async Task SaveConfig(HttpListenerContext context)
         });
 
         await File.WriteAllTextAsync(configPath, formatted, Encoding.UTF8);
+        await BroadcastWebSocketMessage("configChanged");
         await SendJson(context, new { ok = true });
     }
     catch
@@ -548,6 +557,8 @@ async Task SaveCustomTheme(HttpListenerContext context)
 
         string filePath = Path.Combine(customThemesDir, $"{id}.json");
 
+        await BroadcastWebSocketMessage("themesChanged");
+
         if (File.Exists(filePath))
         {
             await SendJson(context, new
@@ -667,6 +678,8 @@ async Task UpdateCustomTheme(HttpListenerContext context)
 
         JsonElement root =
             doc.RootElement;
+        
+        await BroadcastWebSocketMessage("themesChanged");
 
         if (
             !root.TryGetProperty(
@@ -769,6 +782,104 @@ async Task WriteText(HttpListenerContext context, string text, string contentTyp
     context.Response.ContentLength64 = bytes.Length;
     await context.Response.OutputStream.WriteAsync(bytes);
     context.Response.Close();
+}
+
+async Task HandleWebSocket(HttpListenerContext context)
+{
+    if (!context.Request.IsWebSocketRequest)
+    {
+        context.Response.StatusCode = 400;
+        context.Response.Close();
+        return;
+    }
+
+    WebSocketContext wsContext = await context.AcceptWebSocketAsync(null);
+    WebSocket socket = wsContext.WebSocket;
+
+    Guid id = Guid.NewGuid();
+    webSocketClients[id] = socket;
+
+    Console.WriteLine($"WebSocket connected: {id}");
+
+    byte[] buffer = new byte[1024];
+
+    try
+    {
+        while (socket.State == WebSocketState.Open)
+        {
+            WebSocketReceiveResult result = await socket.ReceiveAsync(
+                new ArraySegment<byte>(buffer),
+                CancellationToken.None
+            );
+
+            if (result.MessageType == WebSocketMessageType.Close)
+            {
+                break;
+            }
+        }
+    }
+    catch
+    {
+    }
+    finally
+    {
+        webSocketClients.TryRemove(id, out _);
+
+        try
+        {
+            if (socket.State == WebSocketState.Open)
+            {
+                await socket.CloseAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    "Closing",
+                    CancellationToken.None
+                );
+            }
+        }
+        catch
+        {
+        }
+
+        socket.Dispose();
+
+        Console.WriteLine($"WebSocket disconnected: {id}");
+    }
+}
+
+async Task BroadcastWebSocketMessage(string type)
+{
+    string json = JsonSerializer.Serialize(new
+    {
+        type,
+        timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+    });
+
+    byte[] data = Encoding.UTF8.GetBytes(json);
+
+    foreach (var pair in webSocketClients.ToArray())
+    {
+        WebSocket socket = pair.Value;
+
+        if (socket.State != WebSocketState.Open)
+        {
+            webSocketClients.TryRemove(pair.Key, out _);
+            continue;
+        }
+
+        try
+        {
+            await socket.SendAsync(
+                new ArraySegment<byte>(data),
+                WebSocketMessageType.Text,
+                true,
+                CancellationToken.None
+            );
+        }
+        catch
+        {
+            webSocketClients.TryRemove(pair.Key, out _);
+        }
+    }
 }
 
 FftSettings GetFftSettings()

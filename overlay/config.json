@@ -12,10 +12,10 @@
     "vinylSize": 108
   },
   "colors": {
-    "background": "rgba(0, 10, 6, 0.88)",
-    "text": "#9cffc7",
-    "progress": "#00ff88",
-    "progressBackground": "rgba(0, 255, 136, 0.20)"
+    "background": "rgba(45, 12, 38, 0.82)",
+    "text": "#ffe6f5",
+    "progress": "#ff7ad9",
+    "progressBackground": "rgba(255, 122, 217, 0.22)"
   },
   "timings": {
     "fullVisibleMs": 10000,
@@ -26,62 +26,62 @@
     "marqueeSpeedSec": 10
   },
   "animations": {
-    "fullEnter": "fade",
-    "fullExit": "fade",
-    "tickerEnter": "fade"
+    "fullEnter": "scale",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp"
   },
   "albumArt": {
     "useWindowsThumbnail": true,
     "defaultCover": "/assets/default-cover.png"
   },
   "theme": {
-    "preset": "terminal"
+    "preset": "anime-pink"
   },
   "font": {
-    "family": "Consolas",
-    "titleSize": 23,
-    "artistSize": 15,
+    "family": "Trebuchet MS",
+    "titleSize": 25,
+    "artistSize": 16,
     "tickerSize": 14
   },
   "ticker": {
-    "style": "thin"
+    "style": "glass"
   },
   "fullCard": {
-    "style": "minimal"
+    "style": "glass"
   },
   "vinyl": {
-    "style": "black"
+    "style": "white"
   },
   "particles": {
     "enabled": true,
-    "style": "pixels",
+    "style": "hearts",
     "count": 2,
-    "size": 14,
-    "durationMs": 1700,
-    "color": "#00ff88"
+    "size": 18,
+    "durationMs": 2200,
+    "color": "#ff7ad9"
   },
   "equalizer": {
     "enabled": true,
-    "style": "minimal",
-    "barCount": 48,
-    "barWidth": 4,
+    "style": "neon",
+    "barCount": 56,
+    "barWidth": 5,
     "gap": 3,
-    "height": 62,
-    "offsetY": 0,
-    "sidePadding": 4,
-    "preset": "balanced",
-    "sensitivity": 1.05,
-    "smoothing": 0.62,
+    "height": 78,
+    "offsetY": 1,
+    "sidePadding": 8,
+    "preset": "punchy",
+    "sensitivity": 1.1,
+    "smoothing": 0.68,
     "autoGain": true,
-    "outputGain": 0.7,
-    "spectralContrast": 1.25,
-    "visualCurvePower": 1,
-    "glow": false,
-    "glowPower": 0,
+    "outputGain": 0.75,
+    "spectralContrast": 1.75,
+    "visualCurvePower": 0.88,
+    "glow": true,
+    "glowPower": 24,
     "colorMode": "progress",
-    "color": "#00ff88"
+    "color": "#ff7ad9"
   },
   "audio": {
-    "sourceMode": "system"
+    "sourceMode": "auto"
   }
 }

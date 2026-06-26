@@ -129,6 +129,7 @@ let state = {
 
 async function init() {
   await loadConfig();
+  connectConfigSocket();
   applyConfig();
   createEqualizer();
   setDefaultCover();
@@ -250,7 +251,8 @@ function applyConfig() {
       "vinyl-style-white",
       "vinyl-style-gold",
       "vinyl-style-transparent",
-      "vinyl-style-cd"
+      "vinyl-style-cd",
+      "vinyl-style-bloodMoon"
     ];
     vinylEl.classList.remove(...vinylStyles);
     vinylEl.classList.add(`vinyl-style-${config.vinyl?.style || "classic"}`);
@@ -641,6 +643,63 @@ function createEqualizer() {
     equalizerEl.appendChild(bar);
     eqBars.push(bar);
   }
+}
+
+let configSocket = null;
+let configReloadTimer = null;
+
+function connectConfigSocket() {
+  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+  const url = `${protocol}//${location.host}/ws`;
+
+  configSocket = new WebSocket(url);
+
+  configSocket.onopen = () => {
+    console.log("[MusicOverlay] WebSocket connected");
+  };
+
+  configSocket.onmessage = async event => {
+    let message = null;
+
+    try {
+      message = JSON.parse(event.data);
+    } catch {
+      return;
+    }
+
+    if (message.type === "configChanged") {
+      scheduleConfigReload();
+    }
+  };
+
+  configSocket.onclose = () => {
+    console.log("[MusicOverlay] WebSocket disconnected, reconnecting...");
+    setTimeout(connectConfigSocket, 1500);
+  };
+
+  configSocket.onerror = () => {
+    try {
+      configSocket.close();
+    } catch {}
+  };
+}
+
+function scheduleConfigReload() {
+  clearTimeout(configReloadTimer);
+
+  configReloadTimer = setTimeout(async () => {
+    try {
+      await loadConfig();
+      applyConfig();
+      createEqualizer();
+
+      lastEqBands = [];
+
+      console.log("[MusicOverlay] Config reloaded by WebSocket");
+    } catch (e) {
+      console.error("[MusicOverlay] Config reload failed:", e);
+    }
+  }, 120);
 }
 
 init();
