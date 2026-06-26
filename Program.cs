@@ -6,7 +6,7 @@ using System.Text.Json;
 using Windows.Media.Control;
 using Windows.Storage.Streams;
 
-const string CurrentVersion = "1.4.0";
+const string CurrentVersion = "1.4.1";
 const string GitHubOwner = "AkiroShinomia";
 const string GitHubRepo = "MusicOverlayOBS";
 const string ReleaseAssetName = "MusicOverlayReady.zip";
