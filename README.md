@@ -49,6 +49,69 @@ Recommended Browser Source settings
 http://localhost:8799/settings.html
 ```
 
+### Build from Source
+
+### Requirements
+
+* Windows 10 / Windows 11
+* .NET SDK 8.0 or newer
+* Git
+
+Verify your .NET installation:
+
+```bash
+dotnet --version
+```
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/AkiroShinomia/MusicOverlayOBS.git
+cd MusicOverlayOBS
+```
+
+### 2. Restore dependencies
+
+```bash
+dotnet restore
+```
+
+### 3. Run in Development Mode
+
+```bash
+dotnet run
+```
+
+After the application starts, open:
+
+```
+http://localhost:8799
+```
+
+Settings page:
+
+```
+http://localhost:8799/settings.html
+```
+
+### 4. Build a Release Version
+
+```bash
+dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o publish
+```
+
+The compiled application will be available in:
+
+```
+publish/
+```
+
+Run:
+
+```
+publish/MusicOverlay.exe
+```
+
 ---
 
 # Features
@@ -199,7 +262,71 @@ http://localhost:8799/settings.html
 
 ---
 
+## 🛠️ Сборка из исходного кода
+
+### Требования
+
+* Windows 10 / Windows 11
+* .NET SDK 8.0 или новее
+* Git
+
+Проверьте установленную версию .NET:
+
+```bash
+dotnet --version
+```
+
+### 1. Клонируйте репозиторий
+
+```bash
+git clone https://github.com/AkiroShinomia/MusicOverlayOBS.git
+cd MusicOverlayOBS
+```
+
+### 2. Восстановите зависимости
+
+```bash
+dotnet restore
+```
+
+### 3. Запустите проект в режиме разработки
+
+```bash
+dotnet run
+```
+
+После запуска приложение будет доступно по адресу:
+
+```
+http://localhost:8799
+```
+
+Страница настроек:
+
+```
+http://localhost:8799/settings.html
+```
+
+### 4. Соберите релизную версию
+
+```bash
+dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o publish
+```
+
+Готовая сборка будет находиться в папке:
+
+```
+publish/
+```
+
+Для запуска используйте:
+
+```
+publish/MusicOverlay.exe
+```
+
 # Возможности
+
 
 ## Определение музыки
 
