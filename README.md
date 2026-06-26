@@ -1,8 +1,53 @@
 # 🎵 Music Overlay OBS
 
-A highly customizable **Now Playing** overlay for **OBS Studio** with real-time audio visualization, animated widgets, album artwork and theme support.
+A highly customizable **Now Playing** overlay for **OBS Studio** with real-time audio visualization, album artwork, themes and animated widgets.
 
-Designed for streamers who want a clean, modern and fully customizable music overlay without relying on third-party services.
+---
+
+# Installation
+
+## 1. Download
+
+Download the latest release from the Releases page.
+
+Extract the archive anywhere.
+
+No installation is required.
+
+---
+
+## 2. Start Music Overlay
+
+Run
+
+```
+MusicOverlay.exe
+```
+
+---
+
+## 3. Add Browser Source to OBS
+
+URL
+
+```
+http://localhost:8799
+```
+
+Recommended Browser Source settings
+
+```
+1920×1080
+60 FPS
+```
+
+---
+
+## 4. Open Settings
+
+```
+http://localhost:8799/settings.html
+```
 
 ---
 
@@ -10,91 +55,29 @@ Designed for streamers who want a clean, modern and fully customizable music ove
 
 ## Music Detection
 
-* Windows Media Session integration
-* Supports Spotify
-* Supports YouTube (Chrome / Edge / Chromium browsers)
-* Supports most media players exposing Media Session
-* Automatic track detection
-* Automatic album artwork extraction
-* Fallback cover support
+* Spotify
+* YouTube
+* Chromium browsers
+* Windows Media Session
+* Album artwork
+* Automatic fallback cover
 
 ---
 
 ## Audio Visualization
 
-Real-time FFT audio visualizer with multiple capture modes.
-
-### Capture Modes
-
-* Auto
 * Process Capture
 * System Capture
-
-Automatic fallback to system capture when process capture is unavailable.
-
-### FFT Settings
-
-* Multiple FFT presets
-* Custom sensitivity
-* Smoothing
-* Output Gain
-* Spectral Contrast
-* Visual Curve Power
+* Auto Capture
+* FFT Presets
 * Auto Gain
-* Built-in diagnostics
+* Equalizer customization
 
 ---
 
-## Fully Customizable Overlay
+## Themes
 
-Customize almost every visual element.
-
-### Card
-
-* Background
-* Style
-* Size
-* Position
-
-### Vinyl
-
-* Multiple vinyl styles
-* Animated rotation
-* Custom themes
-
-### Equalizer
-
-* Multiple visual styles
-* Glow
-* Rainbow mode
-* Color modes
-* Height
-* Width
-* Bar count
-* Spacing
-
-### Fonts
-
-* Font family
-* Title size
-* Artist size
-* Ticker size
-
-### Colors
-
-* Background
-* Text
-* Progress bar
-* Equalizer
-* Particles
-
----
-
-# Theme System
-
-Music Overlay includes a built-in theme system.
-
-## Built-in Themes
+Built-in themes
 
 * Glass
 * Neon Purple
@@ -106,184 +89,212 @@ Music Overlay includes a built-in theme system.
 * Terminal
 * RGB Gamer
 
-## Custom Themes
+Custom themes
 
-Create your own themes directly from the Settings window.
-
-Features:
-
-* Save current configuration
-* Update existing theme
-* Create unlimited custom themes
-* Themes stored as JSON
-* Easy backup and sharing
-
-Location:
-
-```text
-overlay/themes/custom
-```
+* Save
+* Update
+* JSON based
+* Unlimited
 
 ---
 
-# Settings
+## Customization
 
-The application includes a full-featured configuration interface.
-
-Current sections:
-
-* Themes
-* Position
-* Sizes
-* Colors
-* Fonts
+* Card
 * Vinyl
 * Equalizer
-* Audio
+* Colors
+* Fonts
 * Animations
 * Particles
-
-Settings are automatically saved to:
-
-```text
-overlay/config.json
-```
-
----
-
-# Installation
-
-## 1. Download
-
-Download the latest release from the **Releases** page.
-
-Extract the archive anywhere.
-
-No installation is required.
-
----
-
-## 2. Start Music Overlay
-
-Run:
-
-```text
-MusicOverlay.exe
-```
-
-The local server will start automatically.
-
----
-
-## 3. Add Browser Source to OBS
-
-Create a new **Browser Source**.
-
-URL:
-
-```text
-http://localhost:8799
-```
-
-Recommended:
-
-```
-Width: 1920
-Height: 1080
-FPS: 60
-```
-
-Enable:
-
-```
-✔ Shutdown source when not visible
-✔ Refresh browser when scene becomes active
-```
-
----
-
-## 4. Open Settings
-
-Open:
-
-```text
-http://localhost:8799/settings.html
-```
-
-or use the Settings button in the application.
 
 ---
 
 # Configuration
 
-Configuration is stored in
+Config
 
-```text
+```
 overlay/config.json
 ```
 
-Themes are stored in
+Themes
 
-```text
+```
 overlay/themes
 ```
 
-Custom themes
+Custom Themes
 
-```text
+```
 overlay/themes/custom
 ```
 
 ---
 
-# Requirements
+# Screenshots
 
-* Windows 10 / Windows 11
-* OBS Studio
-* Modern Chromium browser (recommended)
-* .NET Runtime is **NOT required** (self-contained release)
+Coming soon.
 
 ---
 
 # Roadmap
 
-## Planned
-
-* Live overlay updates via WebSocket
-* Visual layout constructor
+* Live WebSocket updates
 * Theme import/export
-* Theme preview thumbnails
-* More vinyl styles
-* Advanced equalizer modes
-* Better media player compatibility
+* Visual layout constructor
+* Advanced vinyl customization
+* More equalizer modes
 
 ---
 
-# Screenshots
+# 🎵 Music Overlay OBS
 
-> Screenshots will be added soon.
-
----
-
-# License
-
-This project is licensed under the MIT License.
+Полностью настраиваемый **Now Playing Overlay** для **OBS Studio** с отображением текущего трека, обложек альбомов, анимированным эквалайзером и системой пользовательских тем.
 
 ---
 
-# Contributing
+# Установка
 
-Pull requests, feature suggestions and bug reports are welcome.
+## 1. Скачайте релиз
 
-If you find a bug, please create an Issue describing:
+Скачайте последнюю версию со страницы Releases.
 
-* Windows version
-* Music player
-* Browser (if applicable)
-* Steps to reproduce
+Распакуйте архив в любое удобное место.
+
+Установка не требуется.
 
 ---
 
-# Acknowledgements
+## 2. Запустите программу
 
-Built for the streaming community ❤️
+```
+MusicOverlay.exe
+```
+
+---
+
+## 3. Добавьте Browser Source в OBS
+
+URL
+
+```
+http://localhost:8799
+```
+
+Рекомендуемые параметры
+
+```
+1920×1080
+60 FPS
+```
+
+---
+
+## 4. Откройте настройки
+
+```
+http://localhost:8799/settings.html
+```
+
+---
+
+# Возможности
+
+## Определение музыки
+
+Поддерживается:
+
+* Spotify
+* YouTube
+* Chromium-браузеры
+* Windows Media Session
+* Обложки альбомов
+* Автоматическая подстановка стандартной обложки
+
+---
+
+## Эквалайзер
+
+* Захват процесса
+* Захват системного звука
+* Автоматический режим
+* FFT-пресеты
+* Auto Gain
+* Гибкая настройка отображения
+
+---
+
+## Темы
+
+Встроенные темы
+
+* Glass
+* Neon Purple
+* Spotify Green
+* Frost
+* Gold Luxury
+* Blood Moon
+* Retro Synthwave
+* Terminal
+* RGB Gamer
+
+Пользовательские темы
+
+* Создание
+* Обновление
+* Хранение в JSON
+* Неограниченное количество
+
+---
+
+## Настройка интерфейса
+
+Можно изменять:
+
+* Карточку
+* Пластинку
+* Эквалайзер
+* Цвета
+* Шрифты
+* Анимации
+* Частицы
+
+---
+
+# Конфигурация
+
+Основной конфиг
+
+```
+overlay/config.json
+```
+
+Встроенные темы
+
+```
+overlay/themes
+```
+
+Пользовательские темы
+
+```
+overlay/themes/custom
+```
+
+---
+
+# Скриншоты
+
+Будут добавлены позже.
+
+---
+
+# Планы
+
+* Автоматическое обновление Overlay через WebSocket
+* Импорт и экспорт тем
+* Визуальный конструктор
+* Расширенная кастомизация пластинок
+* Новые режимы эквалайзера
+
