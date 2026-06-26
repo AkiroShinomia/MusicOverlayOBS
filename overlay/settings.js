@@ -211,7 +211,13 @@ function fillForm(config) {
   booleanFields.forEach(({ id, path }) => {
     const value = path.split('.').reduce((o, k) => o?.[k], config);
     const el = $(id);
-    if (el) el.checked = Boolean(value);
+    if (!el) return;
+
+    el.checked =
+      value === true ||
+      value === "true" ||
+      value === 1 ||
+      value === "1";
   });
 
   // colors special handling
@@ -253,6 +259,13 @@ function readForm() {
       : el.value;
 
     setNestedValue(config, path, value);
+  });
+
+  booleanFields.forEach(({ id, path }) => {
+    const el = $(id);
+    if (!el) return;
+
+    setNestedValue(config, path, el.checked);
   });
 
   // colors
