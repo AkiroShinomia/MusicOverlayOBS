@@ -38,10 +38,49 @@ body {
   font-family: var(--font-family), Arial, sans-serif;
 }
 
-.full-overlay {
+.dynamic-layout-root { position: fixed; inset: 0; pointer-events: none; }
+.dynamic-runtime-object { position: absolute; left: 0; top: 0; min-width: 30px; min-height: 20px; display: grid; place-items: center; transform-origin: left top; color: #fff; border-radius: 10px; will-change: translate,scale,opacity,filter; }
+.dynamic-runtime-object.kind-image,
+.dynamic-runtime-object.kind-disc { transform-origin: center center; }
+.dynamic-runtime-object.kind-block { width: var(--object-width,260px); height: var(--object-height,110px); border: 1px solid rgba(255,255,255,.18); background: var(--object-color,rgba(12,16,24,.82)); box-shadow: 0 14px 35px rgba(0,0,0,.32); }
+.dynamic-runtime-object.kind-image { box-sizing:border-box; width: var(--object-width,120px); height: var(--object-height,120px); object-fit: cover; background: #1b2230; }
+.dynamic-runtime-object.kind-disc { width: var(--object-size,120px); height: var(--object-size,120px); border-radius: 50%; background: radial-gradient(circle,#111 0 9px,#ddd 10px 14px,#151515 15px 62%,#272727 63% 66%,#111 67%); box-shadow: 0 12px 28px rgba(0,0,0,.45); animation: spin 2.8s linear infinite; }
+.dynamic-runtime-object.kind-disc.style-cd { overflow:hidden; background:radial-gradient(circle,#fbfbff 0 7px,#70727d 8px 13px,transparent 14px),conic-gradient(from 20deg,#f9fbff,#9ee7ff,#ffd1fa,#fff0a6,#abffd7,#d6b8ff,#f9fbff); box-shadow:0 0 18px rgba(184,224,255,.55),0 14px 30px rgba(0,0,0,.42); }
+.dynamic-runtime-object.kind-disc.style-animecd { overflow:hidden; background:radial-gradient(circle,#fff 0 7px,#5d6070 8px 13px,transparent 14px),conic-gradient(from 5deg,#fff 0 8%,#80dcff 15%,#ff9fe7 27%,#fff29b 39%,#8ffff0 52%,#a99cff 66%,#ffb4d7 78%,#fff 100%); box-shadow:0 0 26px rgba(255,130,222,.42),0 16px 34px rgba(0,0,0,.48); animation:spin 4.8s linear infinite; }
+.dynamic-runtime-object.kind-disc.style-animecd::before { content:""; position:absolute; inset:7%; border-radius:50%; background:linear-gradient(125deg,rgba(255,255,255,.72),transparent 28%,rgba(114,228,255,.28) 44%,transparent 62%,rgba(255,139,220,.4)); mix-blend-mode:screen; }
+.dynamic-runtime-object.kind-text { display:block; width:var(--object-width,260px); min-width:0; overflow:hidden; color:var(--object-color,#fff); font-size:var(--object-font-size,28px); font-weight:800; line-height:1.08; white-space:nowrap; text-overflow:ellipsis; }
+.dynamic-runtime-object.kind-text .text-accent { color:#74ff70; }
+.dynamic-runtime-object.kind-time { display:flex; width:var(--object-width,180px); min-width:var(--object-width,180px); justify-content:space-between; color:var(--object-color,#fff); font:var(--object-font-size,18px) Consolas,monospace; }
+.dynamic-runtime-object.kind-time .time-current { margin-right:auto; text-align:left; }
+.dynamic-runtime-object.kind-time .time-total { margin-left:auto; text-align:right; }
+.dynamic-runtime-object.kind-progress { width: var(--object-width,280px); height: var(--object-height,8px); justify-content: start; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.18); }
+.dynamic-runtime-object.kind-progress i { display:block; width:0; height:100%; background:var(--object-color,#fff); }
+.dynamic-runtime-object.kind-equalizer { width: var(--object-width,280px); height: var(--object-height,90px); display:flex; align-items:end; gap:var(--object-gap,4px); }
+.dynamic-runtime-object.kind-equalizer i { flex:1; min-width:2px; height:20%; border-radius:3px 3px 0 0; background:var(--object-color,#8b5cf6); }
+.dynamic-runtime-object.kind-equalizer.style-waveform { position:relative; align-items:center; gap:var(--object-gap,1px); }
+.dynamic-runtime-object.kind-equalizer.style-waveform::before { content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:color-mix(in srgb,var(--object-color,#fff) 42%,transparent); }
+.dynamic-runtime-object.kind-equalizer.style-waveform i { z-index:1; min-width:1px; max-width:3px; border-radius:999px; }
+.dynamic-runtime-object.kind-equalizer.style-pulse i { background:linear-gradient(to top,color-mix(in srgb,var(--object-color,#74ff70) 70%,#05080d),var(--object-color,#74ff70) 58%,#fff); box-shadow:0 0 7px color-mix(in srgb,var(--object-color,#74ff70) 75%,transparent); transition:height 34ms linear; }
+.dynamic-runtime-object.kind-ticker { width: var(--object-width,420px); min-height:var(--object-height,44px); justify-content:start; padding:0 16px; color:var(--object-color,#fff); border-radius:999px; background:rgba(10,13,18,.82); font-size:var(--object-font-size,16px); }
+
+.layout-group {
   position: absolute;
+  transform-origin: left center;
+  will-change: translate, scale, opacity, filter;
+}
+
+.full-layout-group {
   left: var(--overlay-left);
   bottom: var(--full-bottom);
+}
+
+.ticker-layout-group {
+  left: var(--overlay-left);
+  bottom: var(--ticker-bottom);
+}
+
+.full-overlay {
+  position: relative;
   display: flex;
   align-items: center;
   opacity: 1;
@@ -165,9 +204,7 @@ body {
 }
 
 .ticker-overlay {
-  position: absolute;
-  left: var(--overlay-left);
-  bottom: var(--ticker-bottom);
+  position: relative;
   width: var(--ticker-width);
   height: var(--ticker-height);
   padding: 7px 14px 7px 16px;
@@ -324,12 +361,12 @@ body {
 /* Анимации входа */
 .anim-enter-slideLeft {
   opacity: 0;
-  transform: translateX(-180px);
+  transform: translateX(180px);
 }
 
 .anim-enter-slideRight {
   opacity: 0;
-  transform: translateX(180px);
+  transform: translateX(-180px);
 }
 
 .anim-enter-slideUp {
@@ -349,6 +386,11 @@ body {
 .anim-enter-scale {
   opacity: 0;
   transform: scale(0.8);
+}
+
+.anim-enter-rollRight {
+  opacity: 0;
+  transform: translateX(-220px) rotate(-360deg);
 }
 
 .anim-enter-none {}
@@ -383,6 +425,11 @@ body {
   transform: scale(0.8);
 }
 
+.anim-exit-rollRight {
+  opacity: 0;
+  transform: translateX(220px) rotate(360deg);
+}
+
 .anim-exit-none {}
 
 .full-overlay.animating-enter {
@@ -400,6 +447,29 @@ body {
 .full-overlay,
 .ticker-overlay {
   will-change: transform, opacity;
+}
+
+.layout-layer-hidden,
+.layout-group-hidden {
+  display: none !important;
+}
+
+.layout-timeline-hidden,
+.layout-custom-group-hidden {
+  visibility: hidden !important;
+}
+
+[data-layout-layer] {
+  transform-origin: center;
+  will-change: translate, scale, opacity, filter;
+}
+
+.title,
+.artist,
+.time-row,
+.progress,
+.ticker-title {
+  position: relative;
 }
 
 /* Стили винила */
@@ -584,6 +654,12 @@ body {
     0 0 18px currentColor,
     0 0 32px currentColor;
   animation: rainbowShift 4s linear infinite;
+}
+
+.equalizer-style-pulse .eq-bar {
+  background: linear-gradient(to top, color-mix(in srgb, var(--eq-color, var(--progress-color)) 72%, #05080d), var(--eq-color, var(--progress-color)) 58%, #ffffff);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--eq-color, var(--progress-color)) 78%, transparent);
+  transition: height 34ms linear;
 }
 
 @keyframes rainbowShift {

@@ -20,6 +20,7 @@ public class AudioLevelService
     private string sourceMode = "auto";
 
     private readonly object lockObj = new();
+    private readonly object sourceSwitchLock = new();
 
     public void Start()
     {
@@ -63,15 +64,19 @@ public class AudioLevelService
 
     public void SetAudioSourceMode(string mode)
     {
-        sourceMode = mode switch
+        string nextMode = mode switch
         {
             "process" => "process",
             "system" => "system",
             _ => "auto"
         };
 
-        if (sourceMode == "system")
+        lock (sourceSwitchLock)
         {
+            sourceMode = nextMode;
+            if (sourceMode != "system")
+                return;
+
             StopProcessCapture();
 
             // Переключаем FFT-процессор на системный формат, если он есть
@@ -86,33 +91,36 @@ public class AudioLevelService
     {
         currentSourceAppId = sourceAppId ?? "";
 
-        if (sourceMode == "system")
+        lock (sourceSwitchLock)
         {
-            currentProcessId = 0;
-            return;
+            if (sourceMode == "system")
+            {
+                currentProcessId = 0;
+                return;
+            }
+
+            int processId = AudioSessionHelper.GetCurrentMediaProcessId(currentSourceAppId);
+            if (processId <= 0)
+            {
+                currentProcessId = 0;
+                return;
+            }
+
+            currentProcessId = processId;
+
+            // Уже захватываем нужный процесс
+            if (activeProcessCaptureId == currentProcessId)
+                return;
+
+            // Ещё не вышел таймаут повторной попытки для этого процесса
+            if (lastFailedProcessId == currentProcessId &&
+                DateTime.UtcNow < processRetryAfterUtc)
+            {
+                return;
+            }
+
+            RestartProcessCapture(currentProcessId);
         }
-
-        int processId = AudioSessionHelper.GetCurrentMediaProcessId(currentSourceAppId);
-        if (processId <= 0)
-        {
-            currentProcessId = 0;
-            return;
-        }
-
-        currentProcessId = processId;
-
-        // Уже захватываем нужный процесс
-        if (activeProcessCaptureId == currentProcessId)
-            return;
-
-        // Ещё не вышел таймаут повторной попытки для этого процесса
-        if (lastFailedProcessId == currentProcessId &&
-            DateTime.UtcNow < processRetryAfterUtc)
-        {
-            return;
-        }
-
-        RestartProcessCapture(currentProcessId);
     }
 
     private void RestartProcessCapture(int processId)
@@ -155,9 +163,7 @@ public class AudioLevelService
             if (systemCapture != null)
             {
                 fftProcessor.SetWaveFormat(systemCapture.WaveFormat);
-                fftProcessor.SetOutputGain(1.0);
-                fftProcessor.SetSpectralContrast(1.0);
-                fftProcessor.SetVisualCurvePower(1.0);
+                fftProcessor.Reset();
             }
         }
     }
@@ -183,6 +189,8 @@ public class AudioLevelService
         {
             level = Math.Clamp(selectedLevel, 0, 1),
             bands = fftProcessor.GetBands(),
+            energyBands = fftProcessor.GetEnergyBands(),
+            dynamicBarBands = fftProcessor.GetDynamicBarBands(),
             mode,
             sourceAppId = currentSourceAppId,
             processId = currentProcessId,
@@ -212,14 +220,12 @@ public class AudioLevelService
 
     private void OnSystemDataAvailable(object? sender, WaveInEventArgs e)
     {
-        bool allowFft = sourceMode == "system" ||
-                        (sourceMode == "auto" && activeProcessCaptureId <= 0);
+        bool allowFft = sourceMode == "system" || activeProcessCaptureId <= 0;
 
         ProcessAudioBuffer(
             e,
             systemCapture?.WaveFormat,
-            allowFft: allowFft,
-            inputGain: 4.0
+            allowFft: allowFft
         );
     }
 
@@ -228,8 +234,7 @@ public class AudioLevelService
         ProcessAudioBuffer(
             e,
             processCapture?.WaveFormat,
-            allowFft: true,
-            inputGain: 4.0
+            allowFft: true
         );
     }
 
@@ -249,8 +254,7 @@ public class AudioLevelService
     private void ProcessAudioBuffer(
         WaveInEventArgs e,
         WaveFormat? waveFormat,
-        bool allowFft = true,
-        double inputGain = 1.0
+        bool allowFft = true
     )
     {
         if (e.BytesRecorded <= 0 || waveFormat == null)
@@ -269,12 +273,13 @@ public class AudioLevelService
         if (frameCount <= 0)
             return;
 
-        double sum = 0;
+        double sumSquares = 0;
         int validSamples = 0;
 
         for (int frame = 0; frame < frameCount; frame++)
         {
-            float mixedSample = 0;
+            float leftSample = 0;
+            float rightSample = 0;
 
             for (int ch = 0; ch < channels; ch++)
             {
@@ -291,29 +296,36 @@ public class AudioLevelService
                     sample = s / 32768f;
                 }
 
-                mixedSample += sample;
+                if (!float.IsFinite(sample))
+                    sample = 0;
+
+                sample = Math.Clamp(sample, -4f, 4f);
+                if (ch == 0)
+                    leftSample = sample;
+                if (ch == 1)
+                    rightSample = sample;
+
+                sumSquares += sample * sample;
+                validSamples++;
             }
 
-            mixedSample /= channels;
-            mixedSample = Math.Clamp(mixedSample * (float)inputGain, -1f, 1f);
-
-            sum += mixedSample * mixedSample;
-            validSamples++;
+            if (channels == 1)
+                rightSample = leftSample;
 
             if (allowFft)
             {
-                fftProcessor.PushSample(mixedSample);
+                fftProcessor.PushStereoSample(leftSample, rightSample);
             }
         }
 
         if (validSamples > 0)
         {
-            double rms = Math.Sqrt(sum / validSamples);
-            double boosted = rms * 8.0;
+            double rms = Math.Sqrt(sumSquares / validSamples);
+            double visualLevel = 1.0 - Math.Exp(-rms * 8.0);
 
             lock (lockObj)
             {
-                systemLevel = systemLevel * 0.72 + boosted * 0.28;
+                systemLevel = systemLevel * 0.72 + visualLevel * 0.28;
                 systemLevel = Math.Clamp(systemLevel, 0, 1);
             }
         }

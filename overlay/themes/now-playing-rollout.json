@@ -1,41 +1,13 @@
 {
-  "position": {
-    "left": 70,
-    "fullBottom": 80,
-    "tickerBottom": 44
-  },
-  "sizes": {
-    "fullCardWidth": 430,
-    "tickerWidth": 500,
-    "tickerHeight": 42,
-    "coverSize": 92,
-    "vinylSize": 108
-  },
+  "id": "now-playing-rollout",
+  "name": "Now Playing Rollout",
+  "type": "builtin",
+  "version": "2.0.0",
   "colors": {
     "background": "rgba(92, 96, 108, 0.94)",
     "text": "#ffffff",
     "progress": "#74ff70",
     "progressBackground": "rgba(255, 255, 255, 0.20)"
-  },
-  "timings": {
-    "fullVisibleMs": 10000,
-    "coverDelayMs": 500,
-    "cardDelayMs": 850,
-    "exitMs": 600,
-    "marqueeDelayMs": 2000,
-    "marqueeSpeedSec": 10
-  },
-  "animations": {
-    "fullEnter": "scale",
-    "fullExit": "slideDown",
-    "tickerEnter": "slideUp"
-  },
-  "albumArt": {
-    "useWindowsThumbnail": true,
-    "defaultCover": "/assets/default-cover.png"
-  },
-  "theme": {
-    "preset": "now-playing-rollout"
   },
   "font": {
     "family": "Segoe UI",
@@ -121,9 +93,8 @@
         },
         "timing": {
           "startMs": 0,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false
         }
       }
     ],
@@ -131,15 +102,15 @@
       {
         "id": "rollout-cover",
         "name": "Round cover",
-        "kind": "image",
         "templateId": "cover-round",
+        "kind": "image",
         "groupId": "rollout-card-group",
         "marker": "#74ff70",
         "timing": {
           "startMs": 0,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -173,15 +144,15 @@
       {
         "id": "rollout-now-playing",
         "name": "Now Playing",
-        "kind": "text",
         "templateId": "now-playing-text",
+        "kind": "text",
         "groupId": "rollout-card-group",
         "marker": "#74ff70",
         "timing": {
           "startMs": 380,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -211,22 +182,21 @@
           "fontWeight": 850,
           "color": "#ffffff",
           "accentWord": "Playing",
-          "accentColor": "#74ff70",
-          "letterSpacing": 0
+          "accentColor": "#74ff70"
         }
       },
       {
         "id": "rollout-title",
         "name": "Track title",
-        "kind": "text",
         "templateId": "track-title",
+        "kind": "text",
         "groupId": "rollout-card-group",
         "marker": "#ffffff",
         "timing": {
           "startMs": 480,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -260,15 +230,15 @@
       {
         "id": "rollout-artist",
         "name": "Artist",
-        "kind": "text",
         "templateId": "track-artist",
+        "kind": "text",
         "groupId": "rollout-card-group",
         "marker": "#dfe3eb",
         "timing": {
           "startMs": 560,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -302,15 +272,15 @@
       {
         "id": "rollout-waveform",
         "name": "Waveform equalizer",
-        "kind": "equalizer",
         "templateId": "equalizer-waveform",
+        "kind": "equalizer",
         "groupId": "rollout-card-group",
         "marker": "#ffffff",
         "timing": {
           "startMs": 650,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -344,15 +314,15 @@
       {
         "id": "rollout-card-background",
         "name": "Card background",
-        "kind": "block",
         "templateId": "block-glass",
+        "kind": "block",
         "groupId": "rollout-card-group",
         "marker": "#707582",
         "timing": {
           "startMs": 250,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,

@@ -8,7 +8,7 @@ using Windows.Storage.Streams;
 using System.Net.WebSockets;
 using System.Collections.Concurrent;
 
-const string CurrentVersion = "1.4.2";
+const string CurrentVersion = "2.0.0";
 const string GitHubOwner = "AkiroShinomia";
 const string GitHubRepo = "MusicOverlayOBS";
 const string ReleaseAssetName = "MusicOverlayReady.zip";
@@ -226,6 +226,12 @@ async Task HandleRequest(HttpListenerContext context)
             await SaveCustomTheme(context);
             return;
         }
+
+        if (path == "/api/themes/delete" && method == "POST")
+        {
+            await DeleteTheme(context);
+            return;
+        }
         if (path == "/ws")
         {
             await HandleWebSocket(context);
@@ -238,6 +244,15 @@ async Task HandleRequest(HttpListenerContext context)
             )
         {
             await UpdateCustomTheme(context);
+            return;
+        }
+
+        if (
+            path.StartsWith("/api/themes/custom/") &&
+            method == "DELETE"
+            )
+        {
+            await DeleteCustomTheme(context);
             return;
         }
 
@@ -480,7 +495,7 @@ object GetThemes()
     Directory.CreateDirectory(themesDir);
     Directory.CreateDirectory(customThemesDir);
 
-    var result = new List<object>();
+    var result = new List<ThemeInfo>();
 
     result.AddRange(
         GetThemeFiles(
@@ -498,7 +513,13 @@ object GetThemes()
         )
     );
 
-    return result;
+    return result
+        .GroupBy(theme => theme.id, StringComparer.OrdinalIgnoreCase)
+        .Select(group => group.First())
+        .GroupBy(theme => theme.name.Trim(), StringComparer.OrdinalIgnoreCase)
+        .Select(group => group.First())
+        .OrderBy(theme => theme.name, StringComparer.OrdinalIgnoreCase)
+        .ToArray();
 }
 
 async Task SaveCustomTheme(HttpListenerContext context)
@@ -557,8 +578,6 @@ async Task SaveCustomTheme(HttpListenerContext context)
 
         string filePath = Path.Combine(customThemesDir, $"{id}.json");
 
-        await BroadcastWebSocketMessage("themesChanged");
-
         if (File.Exists(filePath))
         {
             await SendJson(context, new
@@ -575,7 +594,7 @@ async Task SaveCustomTheme(HttpListenerContext context)
             id,
             name,
             type = "custom",
-            version = "1.3.4",
+            version = CurrentVersion,
 
             colors = GetOptionalElement(themeProp, "colors"),
             font = GetOptionalElement(themeProp, "font"),
@@ -585,7 +604,8 @@ async Task SaveCustomTheme(HttpListenerContext context)
             particles = GetOptionalElement(themeProp, "particles"),
             equalizer = GetOptionalElement(themeProp, "equalizer"),
             audio = GetOptionalElement(themeProp, "audio"),
-            animations = GetOptionalElement(themeProp, "animations")
+            animations = GetOptionalElement(themeProp, "animations"),
+            layout = GetOptionalElement(themeProp, "layout")
         };
 
         string json = JsonSerializer.Serialize(
@@ -597,6 +617,7 @@ async Task SaveCustomTheme(HttpListenerContext context)
         );
 
         await File.WriteAllTextAsync(filePath, json, Encoding.UTF8);
+        await BroadcastWebSocketMessage("themesChanged");
 
         await SendJson(context, new
         {
@@ -624,17 +645,16 @@ async Task UpdateCustomTheme(HttpListenerContext context)
         string path =
             context.Request.Url?.AbsolutePath ?? "";
 
-        string themeId =
-            path.Replace("/api/themes/custom/", "");
+        string themeId = Uri.UnescapeDataString(
+            path.Replace("/api/themes/custom/", "")
+        ).Trim();
 
-        themeId = themeId.Trim();
-
-        if (string.IsNullOrWhiteSpace(themeId))
+        if (string.IsNullOrWhiteSpace(themeId) || NormalizeThemeId(themeId) != themeId)
         {
             await SendJson(context, new
             {
                 ok = false,
-                error = "Theme id is required"
+                error = "Invalid theme id"
             });
 
             return;
@@ -679,8 +699,6 @@ async Task UpdateCustomTheme(HttpListenerContext context)
         JsonElement root =
             doc.RootElement;
         
-        await BroadcastWebSocketMessage("themesChanged");
-
         if (
             !root.TryGetProperty(
                 "theme",
@@ -719,7 +737,7 @@ async Task UpdateCustomTheme(HttpListenerContext context)
             id = themeId,
             name,
             type = "custom",
-            version = "1.3.4",
+            version = CurrentVersion,
 
             colors = GetOptionalElement(themeProp, "colors"),
             font = GetOptionalElement(themeProp, "font"),
@@ -729,7 +747,8 @@ async Task UpdateCustomTheme(HttpListenerContext context)
             particles = GetOptionalElement(themeProp, "particles"),
             equalizer = GetOptionalElement(themeProp, "equalizer"),
             audio = GetOptionalElement(themeProp, "audio"),
-            animations = GetOptionalElement(themeProp, "animations")
+            animations = GetOptionalElement(themeProp, "animations"),
+            layout = GetOptionalElement(themeProp, "layout")
         };
 
         string json =
@@ -747,6 +766,8 @@ async Task UpdateCustomTheme(HttpListenerContext context)
             Encoding.UTF8
         );
 
+        await BroadcastWebSocketMessage("themesChanged");
+
         await SendJson(context, new
         {
             ok = true,
@@ -761,6 +782,86 @@ async Task UpdateCustomTheme(HttpListenerContext context)
             ok = false,
             error = ex.Message
         });
+    }
+}
+
+async Task DeleteCustomTheme(HttpListenerContext context)
+{
+    try
+    {
+        string path = context.Request.Url?.AbsolutePath ?? "";
+        string themeId = Uri.UnescapeDataString(path.Replace("/api/themes/custom/", "")).Trim();
+
+        if (string.IsNullOrWhiteSpace(themeId) || NormalizeThemeId(themeId) != themeId)
+        {
+            await SendJson(context, new { ok = false, error = "Invalid theme id" });
+            return;
+        }
+
+        string customThemesDir = Path.Combine(overlayDir, "themes", "custom");
+        string filePath = Path.Combine(customThemesDir, $"{themeId}.json");
+
+        if (!File.Exists(filePath))
+        {
+            await SendJson(context, new { ok = false, error = "Theme not found" });
+            return;
+        }
+
+        File.Delete(filePath);
+        await BroadcastWebSocketMessage("themesChanged");
+        await SendJson(context, new { ok = true, id = $"custom/{themeId}" });
+    }
+    catch (Exception ex)
+    {
+        await SendJson(context, new { ok = false, error = ex.Message });
+    }
+}
+
+async Task DeleteTheme(HttpListenerContext context)
+{
+    try
+    {
+        using var reader = new StreamReader(
+            context.Request.InputStream,
+            context.Request.ContentEncoding
+        );
+        string body = await reader.ReadToEndAsync();
+        using var doc = JsonDocument.Parse(body);
+        string id = doc.RootElement.TryGetProperty("id", out var idProp)
+            ? idProp.GetString()?.Trim() ?? ""
+            : "";
+
+        bool custom = id.StartsWith("custom/", StringComparison.OrdinalIgnoreCase);
+        if (!custom)
+        {
+            await SendJson(context, new { ok = false, error = "System themes are protected" });
+            return;
+        }
+
+        string themeId = id["custom/".Length..];
+        if (string.IsNullOrWhiteSpace(themeId) || themeId.Contains('/') || themeId.Contains('\\') || NormalizeThemeId(themeId) != themeId)
+        {
+            await SendJson(context, new { ok = false, error = "Invalid theme id" });
+            return;
+        }
+
+        string themesDir = Path.Combine(overlayDir, "themes");
+        string themeRoot = Path.Combine(themesDir, "custom");
+        string filePath = Path.Combine(themeRoot, $"{themeId}.json");
+
+        if (!File.Exists(filePath))
+        {
+            await SendJson(context, new { ok = false, error = "Theme not found" });
+            return;
+        }
+
+        File.Delete(filePath);
+        await BroadcastWebSocketMessage("themesChanged");
+        await SendJson(context, new { ok = true, id });
+    }
+    catch (Exception ex)
+    {
+        await SendJson(context, new { ok = false, error = ex.Message });
     }
 }
 
@@ -956,7 +1057,7 @@ string GetContentType(string path)
     };
 }
 
-IEnumerable<object> GetThemeFiles(
+IEnumerable<ThemeInfo> GetThemeFiles(
     string directory,
     string type,
     string urlPrefix
@@ -980,28 +1081,23 @@ IEnumerable<object> GetThemeFiles(
                     ? nameProp.GetString() ?? id
                     : id;
 
-                return new
-                {
-                    id = type == "custom"
+                return new ThemeInfo(
+                    type == "custom"
                         ? $"custom/{id}"
                         : id,
-
                     name,
                     type,
-
-                    path = $"{urlPrefix}{fileName}"
-                };
+                    $"{urlPrefix}{fileName}"
+                );
             }
             catch
             {
-                return new
-                {
-                    id,
-                    name = $"{id} (invalid)",
+                return new ThemeInfo(
+                    type == "custom" ? $"custom/{id}" : id,
+                    $"{id} (invalid)",
                     type,
-
-                    path = $"{urlPrefix}{fileName}"
-                };
+                    $"{urlPrefix}{fileName}"
+                );
             }
         });
 }
@@ -1058,4 +1154,11 @@ public record FftSettings(
     double OutputGain,
     double SpectralContrast,
     double VisualCurvePower
+);
+
+public record ThemeInfo(
+    string id,
+    string name,
+    string type,
+    string path
 );

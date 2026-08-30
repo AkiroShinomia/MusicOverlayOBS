@@ -39,24 +39,25 @@
     "height": 62,
     "offsetY": 0,
     "sidePadding": 4,
-    "preset": "balanced",
-    "sensitivity": 1.05,
-    "smoothing": 0.62,
-    "autoGain": true,
-    "outputGain": 0.7,
-    "spectralContrast": 1.25,
-    "visualCurvePower": 1,
     "glow": false,
     "glowPower": 0,
     "colorMode": "progress",
-    "color": "#00ff88"
+    "color": "#00ff88",
+    "preset": "dynamicBars",
+    "sensitivity": 1.12,
+    "smoothing": 0.28,
+    "autoGain": true,
+    "outputGain": 1.0,
+    "spectralContrast": 1.0,
+    "visualCurvePower": 1.0
   },
   "audio": {
     "sourceMode": "system"
   },
   "animations": {
-    "fullEnter": "fade",
-    "fullExit": "fade",
-    "tickerEnter": "fade"
+    "fullEnter": "slideRight",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp",
+    "tickerExit": "none"
   }
 }

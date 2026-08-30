@@ -1,427 +1,188 @@
-# 🎵 Music Overlay OBS
+# Music Overlay OBS 2.0
 
-A highly customizable **Now Playing** overlay for **OBS Studio** with real-time audio visualization, album artwork, themes and animated widgets.
+A Windows **Now Playing** overlay for OBS Studio with process-specific audio capture, a real FFT equalizer, themes, animations, and a visual composition editor.
 
----
+[Русская версия](#русский) · [Releases](https://github.com/AkiroShinomia/MusicOverlayOBS/releases)
 
-# Installation
+## Highlights
 
-## 1. Download
+- Four-zone **Overlay Editor**: Inspector, Canvas, Object Library, and Layers/Timeline.
+- Movable and resizable objects, groups, snapping, Z-order, visibility, locking, and color markers.
+- Timeline timing, draggable edges, composition duration up to 180 seconds, and **Infinity recording** / until-next-track mode.
+- Separate In/Out animations with slide, scale, fade, and rollout presets.
+- Drag-and-drop library with blocks, artwork, vinyl/CD discs, custom text, track data, equalizers, tickers, animations, and effects.
+- Process Loopback Capture for the application currently playing music, with system fallback and diagnostics.
+- Accurate stereo FFT analysis and the new **Dynamic Bars (Musicvid)** preset.
+- Built-in and custom themes with instant WebSocket updates.
+- Russian and English editor interface, persistent workspace layout, and `Ctrl+Z` undo.
 
-Download the latest release from the Releases page.
+## Requirements
 
-Extract the archive anywhere.
+- Windows 10 or Windows 11
+- OBS Studio with Browser Source support
+- A media application exposed through Windows Media Session, such as Spotify or a Chromium browser
 
-No installation is required.
+The downloadable release is self-contained and does not require a separate .NET installation.
 
----
+## Installation
 
-## 2. Start Music Overlay
+1. Download `MusicOverlayReady.zip` from the [latest release](https://github.com/AkiroShinomia/MusicOverlayOBS/releases/latest).
+2. Extract the archive to a directory whose path contains only Latin characters when OBS autostart is required.
+3. Run `MusicOverlay.exe`.
+4. Add a Browser Source in OBS:
 
-Run
-
-```
-MusicOverlay.exe
-```
-
----
-
-## 3. Add Browser Source to OBS
-
-URL
-
-```
-http://localhost:8799
-```
-
-Recommended Browser Source settings
-
-```
-1920×1080
-60 FPS
+```text
+URL: http://localhost:8799/
+Width: 1920
+Height: 1080
+FPS: 60
 ```
 
----
+5. Open the editor:
 
-## 4. Open Settings
-
-```
+```text
 http://localhost:8799/settings.html
 ```
 
-### Build from Source
+## Overlay Editor
 
-### Requirements
+### Canvas
 
-* Windows 10 / Windows 11
-* .NET SDK 8.0 or newer
-* Git
+- Drag an object or group to change its position.
+- Drag selection handles to resize an object without scaling the whole group.
+- Pan the virtual camera by dragging an empty canvas area.
+- Zoom toward the mouse cursor with the wheel.
+- Choose a preview background color; the editor remembers it locally.
 
-Verify your .NET installation:
+### Layers and Timeline
 
-```bash
-dotnet --version
+- Layers are rendered from top to bottom according to their Z-order.
+- Objects may live inside a group or directly on the composition timeline.
+- Groups define the maximum timing range of their child objects.
+- Drag objects and groups between layers or into/out of groups.
+- Drag either edge of a timeline block to shorten or extend it.
+- Nearby timing boundaries snap together.
+- Enable **Infinity recording** to keep an item visible until the next track.
+
+### Inspector and Global Settings
+
+- Inspector fields change according to the selected object type.
+- Global Settings contains audio-source and composition-wide options.
+- The source status, process name, PID, capture errors, and current cover update dynamically.
+
+### Themes
+
+- Selecting a theme loads it immediately.
+- **Apply** updates the live overlay through WebSocket.
+- Built-in themes are protected; custom themes can be created, overwritten, and deleted.
+- The included **Now Playing Rollout** theme demonstrates grouped rollout animation and a compact waveform layout.
+
+## Audio and Equalizer
+
+Music Overlay detects the active Windows Media Session and captures the corresponding process audio stream. If process capture is unavailable, the configured fallback mode is used.
+
+The API exposes capture diagnostics at:
+
+```text
+http://localhost:8799/api/audiolevel
 ```
 
-### 1. Clone the repository
+Available FFT controls include sensitivity, smoothing, auto gain, output gain, spectral contrast, visual curve, and presets. Version 2.0 adds stereo FFT processing, improved logarithmic band separation, frequency calibration, and **Dynamic Bars (Musicvid)** for stronger local peaks and deeper spectral valleys.
 
-```bash
+## OBS Autostart
+
+Keep these files together:
+
+```text
+MusicOverlay/
+├── MusicOverlay.exe
+├── obs-autostart.lua
+└── overlay/
+```
+
+In OBS, open `Tools → Scripts`, add `obs-autostart.lua`, and restart OBS. Avoid Cyrillic or other non-ASCII characters in the installation path when using the Lua autostart script.
+
+## Build from Source
+
+Requirements: .NET SDK 8.0 or newer and Git.
+
+```powershell
 git clone https://github.com/AkiroShinomia/MusicOverlayOBS.git
 cd MusicOverlayOBS
-```
-
-### 2. Restore dependencies
-
-```bash
 dotnet restore
-```
-
-### 3. Run in Development Mode
-
-```bash
 dotnet run
 ```
 
-After the application starts, open:
+Create the self-contained Windows release:
 
-```
-http://localhost:8799
-```
-
-Settings page:
-
-```
-http://localhost:8799/settings.html
-```
-
-### 4. Build a Release Version
-
-```bash
-dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o publish
+```powershell
+dotnet publish -c Release -r win-x64 --self-contained true `
+  /p:PublishSingleFile=true `
+  /p:IncludeNativeLibrariesForSelfExtract=true `
+  /p:EnableCompressionInSingleFile=true `
+  /p:DebugType=None `
+  /p:DebugSymbols=false `
+  -o publish
 ```
 
-The compiled application will be available in:
+## Configuration
 
-```
-publish/
-```
-
-Run:
-
-```
-publish/MusicOverlay.exe
+```text
+overlay/config.json          Current configuration
+overlay/themes/              Built-in themes
+overlay/themes/custom/       User-created themes
 ```
 
----
+The 2.0 layout schema extends the previous theme/config format. Legacy settings are still read where possible and converted into the default composition model by the editor.
 
-# Features
+## Русский
 
-## Music Detection
+**Music Overlay OBS 2.0** — локальный Now Playing оверлей для OBS Studio с захватом звука конкретного процесса, настоящим FFT-эквалайзером, темами, анимациями и визуальным редактором композиций.
 
-* Spotify
-* YouTube
-* Chromium browsers
-* Windows Media Session
-* Album artwork
-* Automatic fallback cover
+### Главное в версии 2.0
 
----
+- Четырёхзонный **Overlay Editor**: Inspector, Canvas, библиотека объектов и Layers/Timeline.
+- Свободное перемещение и изменение размера объектов и групп.
+- Z-order, видимость, блокировка, цветовые маркеры и групповые преобразования.
+- Timeline с привязкой соседних блоков, изменением границ и длительностью композиции до 180 секунд.
+- Режим **Infinity recording** — отображение до следующего трека.
+- Отдельные In/Out-анимации: slide, scale, fade и rollout.
+- Drag-and-drop библиотека блоков, обложек, пластинок/CD, текста, данных трека, эквалайзеров, тикеров, анимаций и эффектов.
+- Захват звукового потока приложения, которое воспроизводит музыку, с системным fallback.
+- Переработанный стерео FFT и пресет **Dynamic Bars (Musicvid)**.
+- Мгновенное применение настроек через WebSocket.
+- Русский и английский интерфейс, сохранение размеров панелей и отмена через `Ctrl+Z`.
 
-## Audio Visualization
+### Быстрый старт
 
-* Process Capture
-* System Capture
-* Auto Capture
-* FFT Presets
-* Auto Gain
-* Equalizer customization
+1. Скачайте `MusicOverlayReady.zip` из [последнего релиза](https://github.com/AkiroShinomia/MusicOverlayOBS/releases/latest).
+2. Распакуйте архив и запустите `MusicOverlay.exe`.
+3. Добавьте в OBS Browser Source с адресом `http://localhost:8799/`, размером 1920×1080 и частотой 60 FPS.
+4. Откройте редактор: `http://localhost:8799/settings.html`.
 
----
+Для автозапуска через OBS добавьте `obs-autostart.lua` в `Tools → Scripts`. Путь к программе рекомендуется указывать без кириллицы.
 
-## Themes
+### Управление редактором
 
-Built-in themes
+- Колесо мыши масштабирует Canvas относительно курсора.
+- Перетаскивание пустой области двигает виртуальную камеру.
+- Объекты и группы можно перемещать и изменять по размеру.
+- Границы блоков на Timeline меняют время начала и окончания.
+- Объекты можно переносить между группами и размещать отдельно на Timeline.
+- Клик по шкале времени перемещает курсор; красную стрелку можно захватывать расширенной областью.
+- Все раскрывающиеся разделы изначально закрыты, чтобы не перегружать интерфейс.
 
-* Glass
-* Neon Purple
-* Spotify Green
-* Frost
-* Gold Luxury
-* Blood Moon
-* Retro Synthwave
-* Terminal
-* RGB Gamer
+### Сборка
 
-Custom themes
+Для разработки нужен .NET SDK 8.0 или новее:
 
-* Save
-* Update
-* JSON based
-* Unlimited
-
----
-
-## Customization
-
-* Card
-* Vinyl
-* Equalizer
-* Colors
-* Fonts
-* Animations
-* Particles
-
----
-
-# Configuration
-
-Config
-
-```
-overlay/config.json
-```
-
-Themes
-
-```
-overlay/themes
-```
-
-Custom Themes
-
-```
-overlay/themes/custom
-```
-
----
-
-# Screenshots
-
-Coming soon.
-
----
-
-# Roadmap
-
-* Live WebSocket updates
-* Theme import/export
-* Visual layout constructor
-* Advanced vinyl customization
-* More equalizer modes
-
----
-
-# 🎵 Music Overlay OBS
-
-Полностью настраиваемый **Now Playing Overlay** для **OBS Studio** с отображением текущего трека, обложек альбомов, анимированным эквалайзером и системой пользовательских тем.
-
----
-
-# Установка
-
-## 1. Скачайте релиз
-
-Скачайте последнюю версию со страницы Releases.
-
-Распакуйте архив в любое удобное место.
-
-Установка не требуется.
-
----
-
-## 2. Запустите программу
-
-```
-MusicOverlay.exe
-```
-
----
-
-## 3. Добавьте Browser Source в OBS
-
-URL
-
-```
-http://localhost:8799
-```
-
-Рекомендуемые параметры
-
-```
-1920×1080
-60 FPS
-```
-
----
-
-## 4. Откройте настройки
-
-```
-http://localhost:8799/settings.html
-```
-
----
-
-## 🛠️ Сборка из исходного кода
-
-### Требования
-
-* Windows 10 / Windows 11
-* .NET SDK 8.0 или новее
-* Git
-
-Проверьте установленную версию .NET:
-
-```bash
-dotnet --version
-```
-
-### 1. Клонируйте репозиторий
-
-```bash
-git clone https://github.com/AkiroShinomia/MusicOverlayOBS.git
-cd MusicOverlayOBS
-```
-
-### 2. Восстановите зависимости
-
-```bash
+```powershell
 dotnet restore
-```
-
-### 3. Запустите проект в режиме разработки
-
-```bash
 dotnet run
 ```
 
-После запуска приложение будет доступно по адресу:
+Команда публикации приведена в английском разделе выше.
 
-```
-http://localhost:8799
-```
+## Release history
 
-Страница настроек:
-
-```
-http://localhost:8799/settings.html
-```
-
-### 4. Соберите релизную версию
-
-```bash
-dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o publish
-```
-
-Готовая сборка будет находиться в папке:
-
-```
-publish/
-```
-
-Для запуска используйте:
-
-```
-publish/MusicOverlay.exe
-```
-
-# Возможности
-
-
-## Определение музыки
-
-Поддерживается:
-
-* Spotify
-* YouTube
-* Chromium-браузеры
-* Windows Media Session
-* Обложки альбомов
-* Автоматическая подстановка стандартной обложки
-
----
-
-## Эквалайзер
-
-* Захват процесса
-* Захват системного звука
-* Автоматический режим
-* FFT-пресеты
-* Auto Gain
-* Гибкая настройка отображения
-
----
-
-## Темы
-
-Встроенные темы
-
-* Glass
-* Neon Purple
-* Spotify Green
-* Frost
-* Gold Luxury
-* Blood Moon
-* Retro Synthwave
-* Terminal
-* RGB Gamer
-
-Пользовательские темы
-
-* Создание
-* Обновление
-* Хранение в JSON
-* Неограниченное количество
-
----
-
-## Настройка интерфейса
-
-Можно изменять:
-
-* Карточку
-* Пластинку
-* Эквалайзер
-* Цвета
-* Шрифты
-* Анимации
-* Частицы
-
----
-
-# Конфигурация
-
-Основной конфиг
-
-```
-overlay/config.json
-```
-
-Встроенные темы
-
-```
-overlay/themes
-```
-
-Пользовательские темы
-
-```
-overlay/themes/custom
-```
-
----
-
-# Скриншоты
-
-Будут добавлены позже.
-
----
-
-# Планы
-
-* Автоматическое обновление Overlay через WebSocket
-* Импорт и экспорт тем
-* Визуальный конструктор
-* Расширенная кастомизация пластинок
-* Новые режимы эквалайзера
-
+See [CHANGELOG.md](CHANGELOG.md) and the [GitHub Releases page](https://github.com/AkiroShinomia/MusicOverlayOBS/releases).

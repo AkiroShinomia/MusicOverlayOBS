@@ -39,11 +39,22 @@
     "height": 58,
     "offsetY": 0,
     "sidePadding": 8,
-    "sensitivity": 1,
-    "smoothing": 0.72,
     "glow": false,
     "glowPower": 0,
     "colorMode": "progress",
-    "color": "#111111"
+    "color": "#111111",
+    "preset": "dynamicBars",
+    "sensitivity": 1.12,
+    "smoothing": 0.28,
+    "autoGain": true,
+    "outputGain": 1.0,
+    "spectralContrast": 1.0,
+    "visualCurvePower": 1.0
+  },
+  "animations": {
+    "fullEnter": "slideRight",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp",
+    "tickerExit": "none"
   }
 }

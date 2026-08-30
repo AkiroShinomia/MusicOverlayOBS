@@ -20,7 +20,7 @@
     "style": "glass"
   },
   "vinyl": {
-    "style": "white"
+    "style": "cd"
   },
   "particles": {
     "enabled": true,
@@ -39,11 +39,22 @@
     "height": 78,
     "offsetY": 1,
     "sidePadding": 8,
-    "sensitivity": 1.1,
-    "smoothing": 0.68,
     "glow": true,
     "glowPower": 24,
     "colorMode": "progress",
-    "color": "#ff7ad9"
+    "color": "#ff7ad9",
+    "preset": "dynamicBars",
+    "sensitivity": 1.12,
+    "smoothing": 0.28,
+    "autoGain": true,
+    "outputGain": 1.0,
+    "spectralContrast": 1.0,
+    "visualCurvePower": 1.0
+  },
+  "animations": {
+    "fullEnter": "slideRight",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp",
+    "tickerExit": "none"
   }
 }

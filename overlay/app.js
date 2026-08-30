@@ -1,5 +1,7 @@
 const fullOverlay = document.getElementById("fullOverlay");
 const tickerOverlay = document.getElementById("tickerOverlay");
+const fullGroup = document.getElementById("fullGroup");
+const tickerGroup = document.getElementById("tickerGroup");
 const titleEl = document.getElementById("title");
 const artistEl = document.getElementById("artist");
 const titleTextEl = document.getElementById("titleText");
@@ -47,9 +49,10 @@ const defaultConfig = {
     marqueeSpeedSec: 10
   },
   animations: {
-    fullEnter: "slideLeft",
+    fullEnter: "slideRight",
     fullExit: "slideDown",
-    tickerEnter: "slideUp"
+    tickerEnter: "slideUp",
+    tickerExit: "none"
   },
   albumArt: {
     useWindowsThumbnail: false,
@@ -90,9 +93,9 @@ const defaultConfig = {
     height: 86,
     offsetY: 0,
     sidePadding: 14,
-    preset: "balanced",
-    sensitivity: 1.15,
-    smoothing: 0.65,
+    preset: "dynamicBars",
+    sensitivity: 1.12,
+    smoothing: 0.28,
     outputGain: 1.0,
     spectralContrast: 1.0,
     visualCurvePower: 1.0,
@@ -116,6 +119,8 @@ let lastThumbnail = "";
 let previousThumbnail = "";
 let ignoreOldThumbnailUntil = 0;
 let particleInterval = null;
+let layoutEnabled = false;
+let layoutTimers = [];
 
 let state = {
   hasTrack: false,
@@ -142,9 +147,15 @@ async function loadConfig() {
   try {
     const response = await fetch(`/api/config?t=${Date.now()}`, { cache: "no-store" });
     const loadedConfig = await response.json();
+    layoutEnabled = Boolean(
+      loadedConfig.layout &&
+      Array.isArray(loadedConfig.layout.groups) &&
+      Array.isArray(loadedConfig.layout.layers)
+    );
     config = mergeConfig(defaultConfig, loadedConfig);
   } catch (e) {
     console.error("Config load error:", e);
+    layoutEnabled = false;
     config = defaultConfig;
   }
 }
@@ -163,8 +174,84 @@ function mergeConfig(base, incoming) {
     fullCard: { ...base.fullCard, ...(incoming.fullCard || {}) },
     vinyl: { ...base.vinyl, ...(incoming.vinyl || {}) },
     particles: { ...base.particles, ...(incoming.particles || {}) },
-    equalizer: { ...base.equalizer, ...(incoming.equalizer || {}) }
+    equalizer: { ...base.equalizer, ...(incoming.equalizer || {}) },
+    audio: { ...(base.audio || {}), ...(incoming.audio || {}) },
+    layout: normalizeRuntimeLayout(incoming.layout)
   };
+}
+
+function normalizeRuntimeLayout(layout) {
+  if (!layout || !Array.isArray(layout.groups) || !Array.isArray(layout.layers)) {
+    return null;
+  }
+
+  const normalizeEffects = value => ({
+    opacity: clampRuntimeNumber(value?.opacity, 0, 100, 100),
+    blur: clampRuntimeNumber(value?.blur, 0, 80, 0),
+    glow: clampRuntimeNumber(value?.glow, 0, 100, 0)
+  });
+
+  const normalizeAnimation = value => {
+    const durationMs = clampRuntimeNumber(value?.durationMs, 0, 10000, 600);
+    const easing = ["linear", "ease-out", "ease-in-out", "spring"].includes(value?.easing) ? value.easing : "ease-out";
+    const enterEasing = ["linear", "ease-out", "ease-in-out", "spring"].includes(value?.enterEasing) ? value.enterEasing : easing;
+    const exitEasing = ["linear", "ease-out", "ease-in-out", "spring"].includes(value?.exitEasing) ? value.exitEasing : easing;
+    return {
+      enter: sanitizeAnimation(value?.enter, "fade"),
+      exit: sanitizeAnimation(value?.exit, "fade"),
+      enterDurationMs: clampRuntimeNumber(value?.enterDurationMs, 0, 10000, durationMs),
+      enterEasing,
+      exitDurationMs: clampRuntimeNumber(value?.exitDurationMs, 0, 10000, durationMs),
+      exitEasing,
+      durationMs,
+      easing
+    };
+  };
+
+  const normalizeTiming = value => {
+    const startMs = clampRuntimeNumber(value?.startMs, 0, 3600000, 0);
+    const untilNextTrack = value?.untilNextTrack === true;
+    return {
+      startMs,
+      untilNextTrack,
+      endMs: untilNextTrack ? null : Math.max(startMs + 50, clampRuntimeNumber(value?.endMs, 0, 3600000, startMs + 1000))
+    };
+  };
+
+  const normalizeItem = item => ({
+    id: typeof item?.id === "string" ? item.id : "",
+    name: typeof item?.name === "string" ? item.name : "",
+    kind: typeof item?.kind === "string" ? item.kind : null,
+    templateId: typeof item?.templateId === "string" ? item.templateId : null,
+    properties: item?.properties && typeof item.properties === "object" ? { ...item.properties } : {},
+    assetData: typeof item?.assetData === "string" ? item.assetData : null,
+    groupId: typeof item?.groupId === "string" ? item.groupId : null,
+    runtimeTarget: item?.runtimeTarget === "full" || item?.runtimeTarget === "ticker" ? item.runtimeTarget : null,
+    visible: item?.visible !== false,
+    locked: item?.locked === true,
+    x: clampRuntimeNumber(item?.x, -10000, 10000, 0),
+    y: clampRuntimeNumber(item?.y, -10000, 10000, 0),
+    scale: clampRuntimeNumber(item?.scale, 10, 400, 100),
+    effects: normalizeEffects(item?.effects),
+    animation: normalizeAnimation(item?.animation),
+    timing: normalizeTiming(item?.timing)
+  });
+
+  return {
+    version: 1,
+    groups: layout.groups.map(normalizeItem).filter(item => item.id),
+    layers: layout.layers.map(normalizeItem).filter(item => item.id)
+  };
+}
+
+function clampRuntimeNumber(value, min, max, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : fallback;
+}
+
+function sanitizeAnimation(value, fallback) {
+  const allowed = ["slideLeft", "slideRight", "slideUp", "slideDown", "rollRight", "fade", "scale", "none"];
+  return allowed.includes(value) ? value : fallback;
 }
 
 function getEqualizerConfig() {
@@ -257,6 +344,194 @@ function applyConfig() {
     vinylEl.classList.remove(...vinylStyles);
     vinylEl.classList.add(`vinyl-style-${config.vinyl?.style || "classic"}`);
   }
+
+  applyRuntimeLayout();
+}
+
+function getRuntimeGroup(id) {
+  return config.layout?.groups?.find(group => group.id === id) || null;
+}
+
+function getRuntimeLayerNode(id) {
+  const nodes = {
+    "full-particles": particleContainer,
+    "full-cover": coverEl,
+    "full-vinyl": vinylEl,
+    "full-title": titleEl,
+    "full-artist": artistEl,
+    "full-time": document.querySelector(".time-row"),
+    "full-progress": document.querySelector(".progress"),
+    "full-card-shell": document.querySelector(".full-card"),
+    "ticker-equalizer": equalizerEl,
+    "ticker-title": tickerTitleEl,
+    "ticker-time": document.querySelector(".ticker-time"),
+    "ticker-progress": document.querySelector(".ticker-progress")
+  };
+  return nodes[id] || document.querySelector(`[data-dynamic-runtime-layer="${CSS.escape(id || "")}"]`) || null;
+}
+
+function syncDynamicRuntimeNodes() {
+  const root = document.getElementById("dynamicLayoutRoot");
+  if (!root || !config.layout) return;
+  const dynamicLayers = config.layout.layers.filter(layer => !document.querySelector(`[data-layout-layer="${CSS.escape(layer.id)}"]`));
+  const ids = new Set(dynamicLayers.map(layer => layer.id));
+  root.querySelectorAll("[data-dynamic-runtime-layer]").forEach(node => {
+    if (!ids.has(node.dataset.dynamicRuntimeLayer)) node.remove();
+  });
+
+  dynamicLayers.forEach(layer => {
+    let node = root.querySelector(`[data-dynamic-runtime-layer="${CSS.escape(layer.id)}"]`);
+    const tag = layer.kind === "image" ? "img" : "div";
+    if (!node || node.tagName.toLowerCase() !== tag) {
+      node?.remove();
+      node = document.createElement(tag);
+      node.dataset.dynamicRuntimeLayer = layer.id;
+      node.className = `dynamic-runtime-object kind-${layer.kind || "block"}`;
+      root.appendChild(node);
+    }
+    updateDynamicRuntimeNode(node, layer);
+  });
+}
+
+function updateDynamicRuntimeNode(node, layer) {
+  const props = layer.properties || {};
+  const runtimeStateClasses = ["layout-layer-hidden", "layout-timeline-hidden", "layout-custom-group-hidden"]
+    .filter(className => node.classList.contains(className));
+  node.className = `dynamic-runtime-object kind-${layer.kind || "block"} style-${String(props.style || "default").toLowerCase()}`;
+  node.classList.add(...runtimeStateClasses);
+  if (layer.kind === "image") {
+    node.src = layer.assetData || lastThumbnail || config.albumArt.defaultCover || DEFAULT_COVER;
+  } else if (layer.kind === "text") {
+    const text = props.binding === "artist" ? state.artist : props.binding === "custom" ? props.text || "" : state.title;
+    renderRuntimeText(node, text, props);
+  } else if (layer.kind === "time") {
+    node.innerHTML = `<span class="time-current">${formatTime(state.position)}</span><span class="time-total">${formatTime(state.duration)}</span>`;
+  } else if (layer.kind === "ticker") {
+    node.textContent = `${state.title || "Track title"} · ${state.artist || "Artist"}`;
+  } else if (layer.kind === "progress") {
+    if (!node.firstElementChild) node.innerHTML = "<i></i>";
+    const progress = state.duration > 0 ? Math.min(state.position / state.duration * 100, 100) : 0;
+    node.firstElementChild.style.width = `${progress}%`;
+  } else if (layer.kind === "equalizer") {
+    const count = clampRuntimeNumber(props.barCount, 4, 120, 32);
+    if (node.children.length !== count) {
+      node.innerHTML = "";
+      for (let index = 0; index < count; index++) node.appendChild(document.createElement("i"));
+    }
+    if (lastAudioData) renderDynamicRuntimeEqualizerNode(node, layer, lastAudioData, getEqualizerConfig());
+    else [...node.children].forEach(bar => bar.style.height = "4px");
+  }
+  node.style.setProperty("--object-width", `${clampRuntimeNumber(props.width, 10, 2000, 260)}px`);
+  node.style.setProperty("--object-height", `${clampRuntimeNumber(props.height, 2, 1200, 100)}px`);
+  node.style.setProperty("--object-size", `${clampRuntimeNumber(props.size, 10, 1200, 120)}px`);
+  node.style.setProperty("--object-font-size", `${clampRuntimeNumber(props.fontSize, 6, 300, 20)}px`);
+  node.style.setProperty("--object-color", props.color || "#ffffff");
+  node.style.setProperty("--object-gap", `${clampRuntimeNumber(props.gap, 0, 20, 3)}px`);
+  node.style.fontWeight = String(clampRuntimeNumber(props.fontWeight, 100, 1000, 800));
+  node.style.letterSpacing = `${clampRuntimeNumber(props.letterSpacing, -10, 40, 0)}px`;
+  node.style.borderRadius = `${clampRuntimeNumber(props.borderRadius, 0, 500, layer.kind === "image" ? 12 : 0)}px`;
+  node.style.border = Number(props.outline) > 0 ? `${clampRuntimeNumber(props.outline, 0, 30, 0)}px solid ${props.outlineColor || "#ffffff"}` : "";
+}
+
+function renderRuntimeText(node, text, props) {
+  const value = String(text || "");
+  const accent = String(props.accentWord || "").trim();
+  node.textContent = "";
+  if (!accent) {
+    node.textContent = value;
+    return;
+  }
+  const index = value.toLocaleLowerCase().indexOf(accent.toLocaleLowerCase());
+  if (index < 0) {
+    node.textContent = value;
+    return;
+  }
+  node.append(document.createTextNode(value.slice(0, index)));
+  const span = document.createElement("span");
+  span.className = "text-accent";
+  span.style.color = props.accentColor || "#74ff70";
+  span.textContent = value.slice(index, index + accent.length);
+  node.append(span, document.createTextNode(value.slice(index + accent.length)));
+}
+
+function buildRuntimeFilter(effects) {
+  const filters = [];
+  if (Number(effects?.blur) > 0) filters.push(`blur(${effects.blur}px)`);
+  if (Number(effects?.glow) > 0) filters.push(`drop-shadow(0 0 ${effects.glow}px currentColor)`);
+  return filters.join(" ");
+}
+
+function applyRuntimeLayout() {
+  if (!layoutEnabled || !config.layout) {
+    resetRuntimeLayoutStyles();
+    return;
+  }
+
+  syncDynamicRuntimeNodes();
+  const groupNodes = {
+    "full-card-group": fullGroup,
+    "ticker-group": tickerGroup
+  };
+  const activeGroupIds = new Set(config.layout.groups.map(group => group.id));
+  Object.entries(groupNodes).forEach(([id, node]) => {
+    node?.classList.toggle("layout-group-hidden", !activeGroupIds.has(id));
+  });
+
+  config.layout.groups.forEach((group, index) => {
+    const node = groupNodes[group.id];
+    if (!node) return;
+    node.style.translate = `${group.x}px ${group.y}px`;
+    node.style.scale = `${group.scale / 100}`;
+    node.style.opacity = `${group.effects.opacity / 100}`;
+    node.style.filter = buildRuntimeFilter(group.effects);
+    node.style.zIndex = String(config.layout.groups.length - index + 100);
+    node.classList.toggle("layout-group-hidden", group.visible === false);
+  });
+
+  config.layout.layers.forEach((layer, index) => {
+    const node = getRuntimeLayerNode(layer.id);
+    if (!node) return;
+    const group = getRuntimeGroup(layer.groupId);
+    const isDynamic = Boolean(node.dataset.dynamicRuntimeLayer);
+    const isCustomGroup = group && (isDynamic || !groupNodes[group.id]);
+    const groupX = isCustomGroup ? group.x : 0;
+    const groupY = isCustomGroup ? group.y : 0;
+    const groupScale = isCustomGroup ? group.scale / 100 : 1;
+    const groupOpacity = isCustomGroup ? group.effects.opacity / 100 : 1;
+    const filters = [isCustomGroup ? buildRuntimeFilter(group.effects) : "", buildRuntimeFilter(layer.effects)].filter(Boolean);
+
+    node.style.translate = `${layer.x + groupX}px ${layer.y + groupY}px`;
+    node.style.scale = `${(layer.scale / 100) * groupScale}`;
+    if (layer.effects.opacity < 100 || groupOpacity < 1) {
+      node.style.opacity = `${(layer.effects.opacity / 100) * groupOpacity}`;
+    } else {
+      node.style.removeProperty("opacity");
+    }
+    node.style.filter = filters.join(" ");
+    node.style.zIndex = String(config.layout.layers.length - index + 10);
+    if (getComputedStyle(node).position === "static") node.style.position = "relative";
+    node.classList.toggle("layout-layer-hidden", layer.visible === false || group?.visible === false);
+  });
+}
+
+function resetRuntimeLayoutStyles() {
+  [fullGroup, tickerGroup].forEach(node => {
+    if (!node) return;
+    node.style.removeProperty("translate");
+    node.style.removeProperty("scale");
+    node.style.removeProperty("opacity");
+    node.style.removeProperty("filter");
+    node.style.removeProperty("z-index");
+    node.classList.remove("layout-group-hidden");
+  });
+  document.querySelectorAll("[data-layout-layer], [data-dynamic-runtime-layer]").forEach(node => {
+    node.style.removeProperty("translate");
+    node.style.removeProperty("scale");
+    node.style.removeProperty("opacity");
+    node.style.removeProperty("filter");
+    node.style.removeProperty("z-index");
+    node.classList.remove("layout-layer-hidden", "layout-timeline-hidden", "layout-custom-group-hidden");
+  });
 }
 
 async function updateNowPlayingFromApi() {
@@ -275,8 +550,15 @@ async function updateNowPlayingFromApi() {
     const apiPosition = Number(data.position || 0);
     const isPlaying = Boolean(data.isPlaying);
     const thumbnail = typeof data.thumbnail === "string" ? data.thumbnail : "";
-    const trackKey = `${title}__${artist}__${duration}`;
-    const isNewTrack = trackKey !== lastTrackKey;
+    const trackKey = `${title.trim().toLocaleLowerCase()}__${artist.trim().toLocaleLowerCase()}`;
+    // Some Chromium media sessions briefly report position=0 while the same
+    // track keeps playing. Treat a same-title reset as a replay only when the
+    // previous position was genuinely at the end of a known-duration track.
+    const wasNearTrackEnd = state.duration > 0 &&
+      state.position >= Math.max(8, state.duration - 5);
+    const restartedSameTrack = trackKey === lastTrackKey &&
+      isPlaying && apiPosition >= 0 && apiPosition < 2.5 && wasNearTrackEnd;
+    const isNewTrack = trackKey !== lastTrackKey || restartedSameTrack;
 
     if (isNewTrack) {
       lastTrackKey = trackKey;
@@ -375,6 +657,12 @@ function renderProgress() {
   const progress = state.duration > 0 ? Math.min((state.position / state.duration) * 100, 100) : 0;
   progressBar.style.width = `${progress}%`;
   tickerProgressBar.style.width = `${progress}%`;
+  if (layoutEnabled) {
+    config.layout?.layers?.filter(layer => layer.templateId).forEach(layer => {
+      const node = getRuntimeLayerNode(layer.id);
+      if (node) updateDynamicRuntimeNode(node, layer);
+    });
+  }
 
   if (state.isPlaying) {
     fullOverlay.classList.remove("paused");
@@ -386,9 +674,14 @@ function renderProgress() {
 }
 
 function showFullThenTicker() {
+  if (layoutEnabled && config.layout) {
+    showLayoutSequence();
+    return;
+  }
+
   clearTimers();
 
-  const fullEnterClass = `anim-enter-${config.animations?.fullEnter || "slideLeft"}`;
+  const fullEnterClass = `anim-enter-${config.animations?.fullEnter || "slideRight"}`;
   const fullExitClass = `anim-exit-${config.animations?.fullExit || "slideDown"}`;
   const tickerEnterClass = `anim-enter-${config.animations?.tickerEnter || "slideUp"}`;
 
@@ -424,6 +717,199 @@ function showFullThenTicker() {
   }, config.timings.fullVisibleMs);
 }
 
+function showLayoutSequence() {
+  clearTimers();
+  clearAnimationClasses(fullOverlay);
+  clearAnimationClasses(tickerOverlay);
+  fullOverlay.classList.add("hidden");
+  fullOverlay.classList.remove("show-cover", "show-card");
+  tickerOverlay.classList.add("hidden");
+  setLayoutLayerTimelineState();
+
+  const groupTargets = {
+    "full-card-group": { wrapper: fullGroup, overlay: fullOverlay, kind: "full" },
+    "ticker-group": { wrapper: tickerGroup, overlay: tickerOverlay, kind: "ticker" }
+  };
+
+  config.layout.groups.forEach(group => {
+    const target = groupTargets[group.id];
+    if (group.visible === false) return;
+    const startMs = Number(group.timing?.startMs || 0);
+    if (target) {
+      queueLayoutTimer(() => showLayoutGroup(group, target), startMs);
+    } else {
+      setCustomLayoutGroupHidden(group, true);
+      queueLayoutTimer(() => showCustomLayoutGroup(group), startMs);
+    }
+    if (!group.timing?.untilNextTrack) {
+      const endMs = Number(group.timing?.endMs || startMs + 1000);
+      const exitName = group.animation?.exit || "none";
+      const exitDuration = exitName === "none"
+        ? 0
+        : Number(group.animation?.exitDurationMs ?? group.animation?.durationMs ?? 600);
+      const exitStartMs = Math.max(startMs, endMs - exitDuration);
+      if (target) queueLayoutTimer(() => hideLayoutGroup(group, target), exitStartMs);
+      else queueLayoutTimer(() => hideCustomLayoutGroup(group), exitStartMs);
+    }
+  });
+
+  config.layout.layers.forEach(layer => {
+    const node = getRuntimeLayerNode(layer.id);
+    if (!node || layer.visible === false) return;
+    const group = getRuntimeGroup(layer.groupId);
+    if (group?.visible === false) return;
+    const startMs = Number(layer.timing?.startMs || 0);
+    queueLayoutTimer(() => showRuntimeLayer(layer, node), startMs);
+    if (!layer.timing?.untilNextTrack) {
+      const layerEnd = Number(layer.timing?.endMs || startMs + 1000);
+      const followsGroupExit = group && !group.timing?.untilNextTrack && Number(group.timing?.endMs) === layerEnd;
+      if (followsGroupExit) {
+        queueLayoutTimer(() => node.classList.add("layout-timeline-hidden"), layerEnd);
+      } else {
+        const layerExitDuration = Number(layer.animation?.exitDurationMs ?? layer.animation?.durationMs ?? 600);
+        queueLayoutTimer(() => hideRuntimeLayer(layer, node), Math.max(startMs, layerEnd - layerExitDuration));
+      }
+    }
+  });
+}
+
+function showLayoutGroup(group, target) {
+  clearAnimationClasses(target.overlay);
+  const enterClass = `anim-enter-${group.animation?.enter || "fade"}`;
+  target.overlay.style.transitionDuration = `${Number(group.animation?.enterDurationMs ?? group.animation?.durationMs ?? 600)}ms`;
+  target.overlay.style.transitionTimingFunction = resolveRuntimeEasing(group.animation?.enterEasing || group.animation?.easing);
+  target.overlay.classList.remove("hidden");
+  target.overlay.classList.add(enterClass);
+
+  if (target.kind === "full") {
+    const groupStart = Number(group.timing?.startMs || 0);
+    const coverStart = Number(config.layout.layers.find(layer => layer.id === "full-cover")?.timing?.startMs ?? groupStart);
+    const cardStart = Number(config.layout.layers.find(layer => layer.id === "full-card-shell")?.timing?.startMs ?? groupStart);
+    queueLayoutTimer(() => target.overlay.classList.add("show-cover"), Math.max(0, coverStart - groupStart));
+    queueLayoutTimer(() => target.overlay.classList.add("show-card"), Math.max(0, cardStart - groupStart));
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => target.overlay.classList.remove(enterClass));
+  });
+}
+
+function hideLayoutGroup(group, target) {
+  clearAnimationClasses(target.overlay);
+  if (target.kind === "full") stopParticles();
+  const exitClass = `anim-exit-${group.animation?.exit || "fade"}`;
+  const duration = Number(group.animation?.exitDurationMs ?? group.animation?.durationMs ?? 600);
+  target.overlay.style.transitionDuration = `${duration}ms`;
+  target.overlay.style.transitionTimingFunction = resolveRuntimeEasing(group.animation?.exitEasing || group.animation?.easing);
+  target.overlay.classList.add(exitClass);
+  queueLayoutTimer(() => {
+    target.overlay.classList.add("hidden");
+    target.overlay.classList.remove("show-cover", "show-card", exitClass);
+  }, duration);
+}
+
+function setLayoutLayerTimelineState() {
+  config.layout.layers.forEach(layer => {
+    const node = getRuntimeLayerNode(layer.id);
+    if (!node) return;
+    node.classList.add("layout-timeline-hidden");
+  });
+}
+
+function setCustomLayoutGroupHidden(group, hidden) {
+  config.layout.layers
+    .filter(layer => layer.groupId === group.id)
+    .forEach(layer => getRuntimeLayerNode(layer.id)?.classList.toggle("layout-custom-group-hidden", hidden));
+}
+
+function showCustomLayoutGroup(group) {
+  setCustomLayoutGroupHidden(group, false);
+  animateCustomLayoutGroup(group, true);
+}
+
+function hideCustomLayoutGroup(group) {
+  animateCustomLayoutGroup(group, false);
+  queueLayoutTimer(() => setCustomLayoutGroupHidden(group, true), Number(group.animation?.exitDurationMs ?? group.animation?.durationMs ?? 600));
+}
+
+function animateCustomLayoutGroup(group, entering) {
+  const name = entering ? group.animation?.enter : group.animation?.exit;
+  if (!name || name === "none") return;
+  const distance = 140;
+  const hiddenFrame = { opacity: 0, transform: "translate(0, 0) scale(1)" };
+  if (name === "slideLeft") hiddenFrame.transform = `translateX(${entering ? distance : -distance}px)`;
+  if (name === "slideRight") hiddenFrame.transform = `translateX(${entering ? -distance : distance}px)`;
+  if (name === "slideUp") hiddenFrame.transform = `translateY(${entering ? distance : -distance}px)`;
+  if (name === "slideDown") hiddenFrame.transform = `translateY(${entering ? -distance : distance}px)`;
+  if (name === "rollRight") hiddenFrame.transform = entering
+    ? "translateX(-220px) rotate(-360deg)"
+    : "translateX(220px) rotate(360deg)";
+  if (name === "scale") hiddenFrame.transform = "scale(.8)";
+  const visibleFrame = { opacity: 1, transform: "translate(0, 0) scale(1)" };
+  const keyframes = entering ? [hiddenFrame, visibleFrame] : [visibleFrame, hiddenFrame];
+  const easingName = entering ? group.animation?.enterEasing : group.animation?.exitEasing;
+  const easing = resolveRuntimeEasing(easingName || group.animation?.easing);
+  const duration = entering
+    ? Number(group.animation?.enterDurationMs ?? group.animation?.durationMs ?? 600)
+    : Number(group.animation?.exitDurationMs ?? group.animation?.durationMs ?? 600);
+
+  config.layout.layers
+    .filter(layer => layer.groupId === group.id)
+    .forEach(layer => {
+      const node = getRuntimeLayerNode(layer.id);
+      if (!node?.animate) return;
+      node.animate(keyframes, {
+        duration,
+        easing,
+        fill: "none"
+      });
+    });
+}
+
+function showRuntimeLayer(layer, node) {
+  node.classList.remove("layout-timeline-hidden");
+  animateRuntimeLayer(layer, node, true);
+}
+
+function hideRuntimeLayer(layer, node) {
+  animateRuntimeLayer(layer, node, false);
+  const duration = Number(layer.animation?.exitDurationMs ?? layer.animation?.durationMs ?? 600);
+  queueLayoutTimer(() => node.classList.add("layout-timeline-hidden"), duration);
+}
+
+function animateRuntimeLayer(layer, node, entering) {
+  if (!node?.animate) return;
+  const name = entering ? layer.animation?.enter : layer.animation?.exit;
+  if (!name || name === "none") return;
+  const distance = 90;
+  const hiddenFrame = { opacity: 0, transform: "translate(0, 0) scale(1)" };
+  if (name === "slideLeft") hiddenFrame.transform = `translateX(${entering ? distance : -distance}px)`;
+  if (name === "slideRight") hiddenFrame.transform = `translateX(${entering ? -distance : distance}px)`;
+  if (name === "slideUp") hiddenFrame.transform = `translateY(${entering ? distance : -distance}px)`;
+  if (name === "slideDown") hiddenFrame.transform = `translateY(${entering ? -distance : distance}px)`;
+  if (name === "rollRight") hiddenFrame.transform = entering
+    ? "translateX(-220px) rotate(-360deg)"
+    : "translateX(220px) rotate(360deg)";
+  if (name === "scale") hiddenFrame.transform = "scale(.8)";
+  const visibleFrame = { opacity: 1, transform: "translate(0, 0) scale(1)" };
+  const easingName = entering ? layer.animation?.enterEasing : layer.animation?.exitEasing;
+  const easing = resolveRuntimeEasing(easingName);
+  const duration = entering
+    ? Number(layer.animation?.enterDurationMs ?? layer.animation?.durationMs ?? 600)
+    : Number(layer.animation?.exitDurationMs ?? layer.animation?.durationMs ?? 600);
+  node.animate(entering ? [hiddenFrame, visibleFrame] : [visibleFrame, hiddenFrame], { duration, easing, fill: "none" });
+}
+
+function resolveRuntimeEasing(value) {
+  return value === "spring" ? "cubic-bezier(.18,.89,.32,1.18)" : value || "ease-out";
+}
+
+function queueLayoutTimer(callback, delayMs) {
+  const timer = setTimeout(callback, Math.max(0, Number(delayMs || 0)));
+  layoutTimers.push(timer);
+  return timer;
+}
+
 function clearAnimationClasses(element) {
   const toRemove = [];
   for (const cls of element.classList) {
@@ -442,6 +928,7 @@ function hideAll() {
   fullOverlay.classList.add("hidden");
   fullOverlay.classList.remove("show-cover", "show-card");
   tickerOverlay.classList.add("hidden");
+  document.querySelectorAll("[data-dynamic-runtime-layer]").forEach(node => node.classList.add("layout-timeline-hidden"));
 }
 
 function clearTimers() {
@@ -453,6 +940,8 @@ function clearTimers() {
   animationTimer1 = null;
   animationTimer2 = null;
   exitTimer = null;
+  layoutTimers.forEach(timer => clearTimeout(timer));
+  layoutTimers = [];
 }
 
 function setDefaultCover() {
@@ -558,11 +1047,17 @@ async function updateAudioLevel() {
 
 let lastEqLevel = 0;
 let lastEqBands = [];
+let lastEnergyBands = [];
+let lastDynamicBarBands = [];
+let lastAudioData = null;
+const dynamicEqualizerStates = new WeakMap();
 
 function renderEqualizer(audioData) {
   if (!equalizerEl) return;
 
   const eq = getEqualizerConfig();
+  lastAudioData = audioData || null;
+  renderDynamicEqualizers(audioData, eq);
   if (!eq.enabled) {
     equalizerEl.style.display = "none";
     return;
@@ -573,12 +1068,110 @@ function renderEqualizer(audioData) {
   const smoothing = Number(eq.smoothing || 0.65);
   const sensitivity = Number(eq.sensitivity || 1);
   const bands = Array.isArray(audioData?.bands) ? audioData.bands : null;
+  const energyBands = Array.isArray(audioData?.energyBands) && audioData.energyBands.length
+    ? audioData.energyBands
+    : bands?.map(value => Math.min(1, Math.pow(Math.max(0, Number(value) || 0), 0.72) * 1.18));
+  const dynamicBarBands = Array.isArray(audioData?.dynamicBarBands) && audioData.dynamicBarBands.length
+    ? audioData.dynamicBarBands
+    : null;
 
-  if (bands && bands.length > 0) {
+  if (eq.preset === "dynamicBars" && dynamicBarBands) {
+    lastDynamicBarBands = renderDynamicBarSet(eqBars, dynamicBarBands, maxHeight, smoothing, sensitivity, lastDynamicBarBands);
+  } else if (eq.preset === "energy" && energyBands && energyBands.length > 0) {
+    lastEnergyBands = renderEnergyBarSet(eqBars, energyBands, maxHeight, smoothing, sensitivity, lastEnergyBands);
+  } else if (bands && bands.length > 0) {
     renderEqualizerBands(bands, maxHeight, smoothing, sensitivity);
   } else {
     renderEqualizerLevel(audioData?.level || 0, maxHeight, smoothing, sensitivity);
   }
+}
+
+function renderDynamicBarSet(bars, bands, maxHeight, smoothing, sensitivity, previous) {
+  if (!Array.isArray(previous) || previous.length !== bars.length) previous = new Array(bars.length).fill(0);
+  const smooth = Math.max(0, Math.min(0.95, Number(smoothing || 0)));
+  const attackMix = 0.78 + (1 - smooth) * 0.18;
+  const releaseMix = 0.12 + (1 - smooth) * 0.16;
+  const usableHeight = Math.max(1, maxHeight - 4);
+
+  for (let i = 0; i < bars.length; i++) {
+    const position = (i / Math.max(1, bars.length - 1)) * (bands.length - 1);
+    const leftIndex = Math.floor(position);
+    const rightIndex = Math.min(bands.length - 1, leftIndex + 1);
+    const fraction = position - leftIndex;
+    const interpolated = Number(bands[leftIndex] || 0) * (1 - fraction) + Number(bands[rightIndex] || 0) * fraction;
+    const aboveFloor = Math.max(0, (interpolated - 0.025) / 0.975);
+    const target = Math.min(1, Math.pow(aboveFloor, 1.08) * sensitivity);
+    const mix = target > previous[i] ? attackMix : releaseMix;
+    previous[i] += (target - previous[i]) * mix;
+    if (previous[i] < 0.004) previous[i] = 0;
+    const height = 4 + previous[i] * usableHeight;
+    bars[i].style.height = `${Math.max(4, Math.min(maxHeight, height)).toFixed(1)}px`;
+  }
+
+  return previous;
+}
+
+function renderEnergyBarSet(bars, bands, maxHeight, smoothing, sensitivity, previous) {
+  if (!Array.isArray(previous) || previous.length !== bars.length) previous = new Array(bars.length).fill(0);
+  const smooth = Math.max(0, Math.min(0.95, Number(smoothing || 0)));
+  const attackMix = 0.78 + (1 - smooth) * 0.18;
+  const releaseMix = 0.18 + (1 - smooth) * 0.28;
+  const usableHeight = Math.max(1, maxHeight - 4);
+
+  for (let i = 0; i < bars.length; i++) {
+    const position = (i / Math.max(1, bars.length - 1)) * (bands.length - 1);
+    const leftIndex = Math.floor(position);
+    const rightIndex = Math.min(bands.length - 1, leftIndex + 1);
+    const fraction = position - leftIndex;
+    const interpolated = Number(bands[leftIndex] || 0) * (1 - fraction) + Number(bands[rightIndex] || 0) * fraction;
+    const target = Math.min(1, Math.pow(Math.max(0, interpolated), 0.86) * sensitivity * 0.92);
+    const mix = target > previous[i] ? attackMix : releaseMix;
+    previous[i] += (target - previous[i]) * mix;
+    const height = 4 + previous[i] * usableHeight;
+    bars[i].style.height = `${Math.max(4, Math.min(maxHeight, height)).toFixed(1)}px`;
+  }
+
+  return previous;
+}
+
+function renderDynamicEqualizers(audioData, equalizerConfig = getEqualizerConfig()) {
+  const sourceBands = equalizerConfig.preset === "dynamicBars" && Array.isArray(audioData?.dynamicBarBands) && audioData.dynamicBarBands.length
+    ? audioData.dynamicBarBands
+    : equalizerConfig.preset === "energy" && Array.isArray(audioData?.energyBands) && audioData.energyBands.length
+      ? audioData.energyBands
+      : Array.isArray(audioData?.bands) ? audioData.bands : null;
+  if (!sourceBands?.length) return;
+
+  document.querySelectorAll(".dynamic-runtime-object.kind-equalizer").forEach(node => {
+    const layer = config.layout?.layers?.find(item => item.id === node.dataset.dynamicRuntimeLayer);
+    if (layer) renderDynamicRuntimeEqualizerNode(node, layer, audioData, equalizerConfig);
+  });
+}
+
+function renderDynamicRuntimeEqualizerNode(node, layer, audioData, equalizerConfig = getEqualizerConfig()) {
+  const usesEnergyPreset = equalizerConfig.preset === "energy";
+  const usesDynamicBarsPreset = equalizerConfig.preset === "dynamicBars";
+  const sourceBands = usesDynamicBarsPreset && Array.isArray(audioData?.dynamicBarBands) && audioData.dynamicBarBands.length
+    ? audioData.dynamicBarBands
+    : usesEnergyPreset && Array.isArray(audioData?.energyBands) && audioData.energyBands.length
+      ? audioData.energyBands
+      : Array.isArray(audioData?.bands) ? audioData.bands : null;
+  if (!sourceBands?.length) return;
+
+  const props = layer?.properties || {};
+  const maxHeight = clampRuntimeNumber(props.height, 12, 1200, 110);
+  const sensitivity = clampRuntimeNumber(equalizerConfig.sensitivity, 0.25, 4, 1.15);
+  const smoothing = clampRuntimeNumber(equalizerConfig.smoothing, 0, 0.95, 0.55);
+  const renderBars = usesDynamicBarsPreset ? renderDynamicBarSet : renderEnergyBarSet;
+  const state = renderBars(
+    [...node.children],
+    sourceBands,
+    maxHeight,
+    smoothing,
+    sensitivity,
+    dynamicEqualizerStates.get(node)
+  );
+  dynamicEqualizerStates.set(node, state);
 }
 
 function renderEqualizerBands(bands, maxHeight, smoothing, sensitivity) {
@@ -600,9 +1193,7 @@ function renderEqualizerBands(bands, maxHeight, smoothing, sensitivity) {
 
     lastEqBands[i] = lastEqBands[i] * smoothing + boosted * (1 - smoothing);
 
-    const center = Math.abs(i - eqBars.length / 2) / (eqBars.length / 2);
-    const centerShape = 1.05 - center * 0.18;
-    const height = 4 + lastEqBands[i] * maxHeight * centerShape;
+    const height = 4 + lastEqBands[i] * maxHeight;
     bar.style.height = `${Math.max(4, Math.min(maxHeight, height))}px`;
   }
 }
@@ -628,6 +1219,9 @@ function createEqualizer() {
   const eq = getEqualizerConfig();
   equalizerEl.innerHTML = "";
   eqBars.length = 0;
+  lastEqBands = [];
+  lastEnergyBands = [];
+  lastDynamicBarBands = [];
 
   const barCount = Math.max(8, Math.min(120, Number(eq.barCount || 64)));
   for (let i = 0; i < barCount; i++) {
@@ -689,13 +1283,24 @@ function scheduleConfigReload() {
 
   configReloadTimer = setTimeout(async () => {
     try {
+      clearTimers();
       await loadConfig();
       applyConfig();
       createEqualizer();
 
       lastEqBands = [];
+      lastEnergyBands = [];
+      lastDynamicBarBands = [];
 
-      console.log("[MusicOverlay] Config reloaded by WebSocket");
+      if (state.hasTrack) {
+        renderProgress();
+        showFullThenTicker();
+        startParticles();
+      } else {
+        hideAll();
+      }
+
+      console.log("[MusicOverlay] Config reloaded by WebSocket; timeline restarted");
     } catch (e) {
       console.error("[MusicOverlay] Config reload failed:", e);
     }
