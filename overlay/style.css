@@ -165,6 +165,23 @@ body {
   transform: translateX(0);
 }
 
+/*
+ * Timeline layouts animate every layer themselves. Keep the legacy cover/card
+ * reveal from adding a second delayed translation on top of those animations;
+ * otherwise the live overlay can overlap while the editor preview is correct.
+ */
+body.layout-runtime-active .cover,
+body.layout-runtime-active .full-card {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* Let Timeline z-index values participate in the parent stacking context. */
+body.layout-runtime-active .vinyl-wrap {
+  z-index: auto;
+}
+
 .title {
   font-size: var(--title-size);
   font-weight: 800;

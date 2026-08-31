@@ -1,4 +1,4 @@
-{
+﻿{
   "position": {
     "left": 70,
     "fullBottom": 80,
@@ -26,9 +26,10 @@
     "marqueeSpeedSec": 10
   },
   "animations": {
-    "fullEnter": "scale",
+    "fullEnter": "slideRight",
     "fullExit": "slideDown",
-    "tickerEnter": "slideUp"
+    "tickerEnter": "slideUp",
+    "tickerExit": "none"
   },
   "albumArt": {
     "useWindowsThumbnail": true,
@@ -69,17 +70,17 @@
     "height": 34,
     "offsetY": 0,
     "sidePadding": 0,
-    "glow": false,
-    "glowPower": 0,
-    "colorMode": "custom",
-    "color": "#ffffff",
     "preset": "dynamicBars",
     "sensitivity": 1.12,
     "smoothing": 0.28,
     "autoGain": true,
-    "outputGain": 1.0,
-    "spectralContrast": 1.0,
-    "visualCurvePower": 1.0
+    "outputGain": 1,
+    "spectralContrast": 1,
+    "visualCurvePower": 1,
+    "glow": false,
+    "glowPower": 0,
+    "colorMode": "custom",
+    "color": "#ffffff"
   },
   "audio": {
     "sourceMode": "auto"
@@ -101,8 +102,8 @@
         "visible": true,
         "locked": false,
         "marker": "#74ff70",
-        "x": 0,
-        "y": 0,
+        "x": -550,
+        "y": -30,
         "scale": 100,
         "effects": {
           "opacity": 100,
@@ -121,8 +122,8 @@
         },
         "timing": {
           "startMs": 0,
-          "endMs": null,
-          "untilNextTrack": true,
+          "endMs": 4500,
+          "untilNextTrack": false,
           "untilGroupEnd": false
         }
       }
@@ -137,9 +138,9 @@
         "marker": "#74ff70",
         "timing": {
           "startMs": 0,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -179,9 +180,9 @@
         "marker": "#74ff70",
         "timing": {
           "startMs": 380,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -211,8 +212,7 @@
           "fontWeight": 850,
           "color": "#ffffff",
           "accentWord": "Playing",
-          "accentColor": "#74ff70",
-          "letterSpacing": 0
+          "accentColor": "#74ff70"
         }
       },
       {
@@ -224,9 +224,9 @@
         "marker": "#ffffff",
         "timing": {
           "startMs": 480,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -266,9 +266,9 @@
         "marker": "#dfe3eb",
         "timing": {
           "startMs": 560,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -308,9 +308,9 @@
         "marker": "#ffffff",
         "timing": {
           "startMs": 650,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,
@@ -350,9 +350,9 @@
         "marker": "#707582",
         "timing": {
           "startMs": 250,
-          "endMs": null,
-          "untilNextTrack": true,
-          "untilGroupEnd": false
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
         },
         "visible": true,
         "locked": false,

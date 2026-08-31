@@ -1,3 +1,21 @@
+# Music Overlay OBS v2.0.1
+
+## Patch update
+
+- Added timeline reconciliation so the next group or object reliably appears after a finite group ends, including throttled OBS browser sources.
+- Added runtime/server version checks and disabled caching for editor and overlay scripts/styles.
+- Fixed the live overlay applying legacy card movement on top of Timeline animations.
+- Updated application and assembly version to 2.0.1.
+
+## Патч 2.0.1
+
+- Добавлена контрольная синхронизация Timeline: следующая группа или объект гарантированно появляется после завершения предыдущей, включая фоновые OBS Browser Source.
+- Добавлена сверка версии страницы с программой и отключено кеширование скриптов/стилей редактора и оверлея.
+- Исправлено одновременное применение старого смещения карточки и новой Timeline-анимации.
+- Версия программы и сборки обновлена до 2.0.1.
+
+---
+
 # Music Overlay OBS v2.0.0
 
 ## Overlay Editor Update

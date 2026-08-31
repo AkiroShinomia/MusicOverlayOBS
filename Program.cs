@@ -8,7 +8,7 @@ using Windows.Storage.Streams;
 using System.Net.WebSockets;
 using System.Collections.Concurrent;
 
-const string CurrentVersion = "2.0.0";
+const string CurrentVersion = "2.0.1";
 const string GitHubOwner = "AkiroShinomia";
 const string GitHubRepo = "MusicOverlayOBS";
 const string ReleaseAssetName = "MusicOverlayReady.zip";
@@ -190,6 +190,12 @@ async Task HandleRequest(HttpListenerContext context)
         string path = context.Request.Url?.AbsolutePath ?? "/";
         string method = context.Request.HttpMethod;
 
+        if (path == "/api/version")
+        {
+            await SendJson(context, new { version = CurrentVersion });
+            return;
+        }
+
         if (path == "/api/nowplaying")
         {
             var data = await GetNowPlaying();
@@ -284,6 +290,15 @@ async Task HandleRequest(HttpListenerContext context)
         byte[] bytes = await File.ReadAllBytesAsync(filePath);
 
         context.Response.ContentType = contentType;
+        if (contentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) ||
+            contentType.StartsWith("text/css", StringComparison.OrdinalIgnoreCase) ||
+            contentType.StartsWith("application/javascript", StringComparison.OrdinalIgnoreCase) ||
+            contentType.StartsWith("text/javascript", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate";
+            context.Response.Headers["Pragma"] = "no-cache";
+            context.Response.Headers["Expires"] = "0";
+        }
         context.Response.ContentLength64 = bytes.Length;
         await context.Response.OutputStream.WriteAsync(bytes);
         context.Response.Close();

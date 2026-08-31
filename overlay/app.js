@@ -19,6 +19,7 @@ const vinylEl = document.querySelector(".vinyl");
 const particleContainer = document.getElementById("particleContainer");
 const equalizerEl = document.getElementById("equalizer");
 const DEFAULT_COVER = "/assets/default-cover.png";
+const CLIENT_VERSION = "2.0.1";
 const eqBars = [];
 
 const defaultConfig = {
@@ -121,6 +122,8 @@ let ignoreOldThumbnailUntil = 0;
 let particleInterval = null;
 let layoutEnabled = false;
 let layoutTimers = [];
+let layoutSequenceStartedAt = 0;
+let layoutWatchdog = null;
 
 let state = {
   hasTrack: false,
@@ -272,6 +275,7 @@ function getEqualizerConfig() {
 
 function applyConfig() {
   const root = document.documentElement;
+  document.body?.classList.toggle("layout-runtime-active", Boolean(layoutEnabled && config.layout));
   root.style.setProperty("--overlay-left", `${config.position.left}px`);
   root.style.setProperty("--full-bottom", `${config.position.fullBottom}px`);
   root.style.setProperty("--ticker-bottom", `${config.position.tickerBottom}px`);
@@ -719,6 +723,7 @@ function showFullThenTicker() {
 
 function showLayoutSequence() {
   clearTimers();
+  layoutSequenceStartedAt = Date.now();
   clearAnimationClasses(fullOverlay);
   clearAnimationClasses(tickerOverlay);
   fullOverlay.classList.add("hidden");
@@ -771,6 +776,49 @@ function showLayoutSequence() {
       }
     }
   });
+
+  // Chromium may throttle or drop long background timers in an OBS source.
+  // Reconcile the active timeline window so a later group/layer still appears.
+  layoutWatchdog = setInterval(reconcileLayoutSequence, 250);
+}
+
+function isRuntimeTimelineItemActive(item, elapsedMs) {
+  if (!item || item.visible === false) return false;
+  const startMs = Number(item.timing?.startMs || 0);
+  if (elapsedMs < startMs) return false;
+  if (item.timing?.untilNextTrack) return true;
+  return elapsedMs < Number(item.timing?.endMs || startMs + 1000);
+}
+
+function reconcileLayoutSequence() {
+  if (!layoutEnabled || !config.layout || !layoutSequenceStartedAt) return;
+  const elapsedMs = Math.max(0, Date.now() - layoutSequenceStartedAt);
+  const groupTargets = {
+    "full-card-group": { wrapper: fullGroup, overlay: fullOverlay, kind: "full" },
+    "ticker-group": { wrapper: tickerGroup, overlay: tickerOverlay, kind: "ticker" }
+  };
+
+  config.layout.groups.forEach(group => {
+    if (!isRuntimeTimelineItemActive(group, elapsedMs)) return;
+    const target = groupTargets[group.id];
+    if (target) {
+      if (target.overlay.classList.contains("hidden")) showLayoutGroup(group, target);
+      return;
+    }
+    const hiddenChild = config.layout.layers
+      .filter(layer => layer.groupId === group.id)
+      .map(layer => getRuntimeLayerNode(layer.id))
+      .find(node => node?.classList.contains("layout-custom-group-hidden"));
+    if (hiddenChild) showCustomLayoutGroup(group);
+  });
+
+  config.layout.layers.forEach(layer => {
+    const group = getRuntimeGroup(layer.groupId);
+    if (group && !isRuntimeTimelineItemActive(group, elapsedMs)) return;
+    if (!isRuntimeTimelineItemActive(layer, elapsedMs)) return;
+    const node = getRuntimeLayerNode(layer.id);
+    if (node?.classList.contains("layout-timeline-hidden")) showRuntimeLayer(layer, node);
+  });
 }
 
 function showLayoutGroup(group, target) {
@@ -780,14 +828,6 @@ function showLayoutGroup(group, target) {
   target.overlay.style.transitionTimingFunction = resolveRuntimeEasing(group.animation?.enterEasing || group.animation?.easing);
   target.overlay.classList.remove("hidden");
   target.overlay.classList.add(enterClass);
-
-  if (target.kind === "full") {
-    const groupStart = Number(group.timing?.startMs || 0);
-    const coverStart = Number(config.layout.layers.find(layer => layer.id === "full-cover")?.timing?.startMs ?? groupStart);
-    const cardStart = Number(config.layout.layers.find(layer => layer.id === "full-card-shell")?.timing?.startMs ?? groupStart);
-    queueLayoutTimer(() => target.overlay.classList.add("show-cover"), Math.max(0, coverStart - groupStart));
-    queueLayoutTimer(() => target.overlay.classList.add("show-card"), Math.max(0, cardStart - groupStart));
-  }
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => target.overlay.classList.remove(enterClass));
@@ -942,6 +982,9 @@ function clearTimers() {
   exitTimer = null;
   layoutTimers.forEach(timer => clearTimeout(timer));
   layoutTimers = [];
+  if (layoutWatchdog) clearInterval(layoutWatchdog);
+  layoutWatchdog = null;
+  layoutSequenceStartedAt = 0;
 }
 
 function setDefaultCover() {
@@ -1250,6 +1293,7 @@ function connectConfigSocket() {
 
   configSocket.onopen = () => {
     console.log("[MusicOverlay] WebSocket connected");
+    verifyRuntimeVersion();
   };
 
   configSocket.onmessage = async event => {
@@ -1276,6 +1320,15 @@ function connectConfigSocket() {
       configSocket.close();
     } catch {}
   };
+}
+
+async function verifyRuntimeVersion() {
+  try {
+    const response = await fetch(`/api/version?t=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (data.version && data.version !== CLIENT_VERSION) location.reload();
+  } catch {}
 }
 
 function scheduleConfigReload() {
