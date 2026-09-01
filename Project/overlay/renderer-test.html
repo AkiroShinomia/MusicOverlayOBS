@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Scene Renderer 2A Verification</title>
+  <link rel="stylesheet" href="shared/scene-renderer.css?v=2.1.0" />
+  <link rel="stylesheet" href="renderer-test.css?v=2.1.0" />
+</head>
+<body>
+  <header class="test-toolbar">
+    <strong>Scene Renderer · Stage 2D native contract</strong>
+    <label>Сцена <select id="sceneSource"><option value="draft">Draft</option><option value="published">Published</option><option value="default">Default Rollout</option><option value="nested">Nested fixture</option></select></label>
+    <button id="reloadScene" type="button">Перезагрузить</button>
+    <button id="playScene" type="button">▶</button>
+    <button id="stopScene" type="button">■</button>
+    <button id="runChecks" type="button">Проверить все темы</button>
+    <output id="checkStatus" title="Все источники используют нативную геометрию Scene v2.">Готово</output>
+  </header>
+
+  <main class="test-layout">
+    <section class="test-preview-panel">
+      <div class="test-preview-header">
+        <label>Время <input id="sceneTime" type="range" min="0" max="30000" step="10" value="0" /></label>
+        <output id="sceneTimeLabel">0.000s</output>
+        <label>Масштаб <input id="sceneScale" type="range" min="20" max="100" step="5" value="45" /></label>
+      </div>
+      <div id="sceneViewport" class="test-viewport">
+        <div id="sceneMount"></div>
+      </div>
+    </section>
+
+    <aside class="test-report-panel">
+      <h2>Renderer report</h2>
+      <pre id="rendererReport"></pre>
+      <h2>Scene tree</h2>
+      <ol id="sceneTree"></ol>
+    </aside>
+  </main>
+
+  <script src="shared/scene-order.js?v=2.1.0"></script>
+  <script src="shared/layer-renderer.js?v=2.1.0"></script>
+  <script src="shared/scene-timeline.js?v=2.1.0"></script>
+  <script src="shared/component-registry.js?v=2.1.0"></script>
+  <script src="shared/scene-renderer.js?v=2.1.0"></script>
+  <script src="renderer-test.js?v=2.1.0"></script>
+</body>
+</html>

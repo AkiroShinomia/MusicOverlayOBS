@@ -4,7 +4,11 @@ obj/
 publish/
 
 *.exe
+*.exe.sha256
 *.rar
 *.zip
 work/
+data/
+/main/
+/backups/
 Замеры.txt

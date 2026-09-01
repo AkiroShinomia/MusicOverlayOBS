@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Music Overlay Editor</title>
+  <link rel="stylesheet" href="shared/scene-renderer.css?v=2.1.0" />
+  <link rel="stylesheet" href="settings.css?v=2.1.0" />
+</head>
+<body>
+  <main class="editor-shell">
+    <header class="editor-topbar">
+      <div class="brand-block">
+        <div class="brand-mark">MO</div>
+        <div>
+          <strong data-i18n="appTitle">Overlay Editor</strong>
+          <span>MusicOverlayOBS · v2.1.0</span>
+        </div>
+        <label class="topbar-theme-select">
+          <span data-i18n="theme">Тема</span>
+          <select id="themePreset"><option value="Custom">Custom</option></select>
+        </label>
+        <div class="topbar-theme-tools">
+          <button id="saveThemeBtn" class="button button-secondary" data-i18n="saveTheme">Сохранить тему</button>
+          <button id="deleteThemeBtn" class="button button-danger" hidden data-i18n="delete">Удалить</button>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <span id="status" class="status-pill">Готово</span>
+        <span id="wsStatus" class="ws-status is-offline"><i></i><span>WS отключён</span></span>
+        <label class="language-select" title="Language"><select id="languageSelect"><option value="ru">RU</option><option value="en">EN</option></select></label>
+        <button id="undoBtn" class="button button-ghost history-button" type="button" title="Отменить · Ctrl+Z">↶</button>
+        <button id="redoBtn" class="button button-ghost history-button" type="button" title="Повторить · Ctrl+Shift+Z">↷</button>
+        <button id="resetBtn" class="button button-ghost" data-i18n="reset">Сбросить</button>
+        <button id="saveBtn" class="button button-primary" data-i18n="apply">Применить</button>
+      </div>
+    </header>
+
+    <div class="editor-grid">
+      <aside class="editor-panel inspector-panel" aria-label="Inspector">
+        <div class="panel-heading">
+          <div class="sidebar-tabs" role="tablist">
+            <button id="inspectorTab" class="sidebar-tab is-active" type="button" role="tab">Inspector</button>
+            <button id="globalSettingsTab" class="sidebar-tab" type="button" role="tab">Global Settings</button>
+          </div>
+          <span id="inspectorType" class="type-chip">GROUP</span>
+        </div>
+
+        <div id="inspectorPane" class="panel-scroll sidebar-pane is-active">
+          <section class="inspector-card selection-card">
+            <label class="field field-stack">
+              <span>Название</span>
+              <input id="inspectorName" type="text" />
+            </label>
+
+            <div class="field-grid field-grid-2">
+              <label class="field compact-toggle">
+                <span>Видимость</span>
+                <input id="inspectorVisible" type="checkbox" />
+              </label>
+              <label class="field compact-toggle">
+                <span>Lock</span>
+                <input id="inspectorLocked" type="checkbox" />
+              </label>
+            </div>
+
+            <label id="inspectorGroupField" class="field field-stack">
+              <span>Группа</span>
+              <select id="inspectorGroup"></select>
+            </label>
+
+            <label class="field marker-field">
+              <span>Color marker</span>
+              <input id="inspectorMarker" type="color" />
+            </label>
+          </section>
+
+          <details class="inspector-section">
+            <summary>Transform</summary>
+            <div class="section-body">
+              <div class="field-grid field-grid-2">
+                <label class="field field-stack"><span>X</span><input id="inspectorX" type="number" /></label>
+                <label class="field field-stack"><span>Y</span><input id="inspectorY" type="number" /></label>
+              </div>
+              <label class="field field-stack">
+                <span>Scale, %</span>
+                <input id="inspectorScale" type="number" min="10" max="400" />
+              </label>
+              <p id="transformHint" class="micro-hint">Перетаскивайте выбранный слой или группу прямо на Canvas.</p>
+            </div>
+          </details>
+
+          <details class="inspector-section">
+            <summary data-i18n="timing">Timing</summary>
+            <div class="section-body">
+              <p id="inspectorTimingScope" class="timing-scope"></p>
+              <div class="field-grid field-grid-2">
+                <label class="field field-stack"><span id="inspectorStartLabel">Start, ms</span><input id="inspectorStart" type="number" min="0" step="100" /></label>
+                <label class="field field-stack"><span id="inspectorEndLabel">End, ms</span><input id="inspectorEnd" type="number" min="0" step="100" /></label>
+              </div>
+              <label class="field compact-toggle infinite-toggle">
+                <span id="inspectorUntilLabel">Infinity recording</span>
+                <input id="inspectorUntilNext" type="checkbox" />
+              </label>
+            </div>
+          </details>
+
+          <details class="inspector-section">
+            <summary>Effects</summary>
+            <div class="section-body">
+              <label class="field field-stack"><span>Opacity, %</span><input id="inspectorOpacity" type="number" min="0" max="100" /></label>
+              <div class="field-grid field-grid-2">
+                <label class="field field-stack"><span>Blur, px</span><input id="inspectorBlur" type="number" min="0" max="80" /></label>
+                <label class="field field-stack"><span>Glow, px</span><input id="inspectorGlow" type="number" min="0" max="100" /></label>
+              </div>
+            </div>
+          </details>
+
+          <details class="inspector-section">
+            <summary>Animation</summary>
+            <div class="section-body">
+              <label id="groupAnimationOverrideField" class="field compact-toggle" hidden>
+                <span>Затирать анимации объектов</span><input id="inspectorOverrideChildren" type="checkbox" />
+              </label>
+              <p id="animationInheritanceHint" class="animation-inheritance-hint" hidden></p>
+              <fieldset id="animationDirectionControls" class="animation-direction-controls">
+              <section class="animation-direction-card">
+                <h3>In</h3>
+                <label class="field field-stack"><span>Animation In</span>
+                  <select id="inspectorEnter">
+                    <option value="slideLeft">Slide Left</option><option value="slideRight">Slide Right</option>
+                    <option value="slideUp">Slide Up</option><option value="slideDown">Slide Down</option>
+                    <option value="rollRight">Roll Right</option><option value="scale">Scale</option><option value="fade">Fade</option><option value="none">None</option>
+                  </select>
+                </label>
+                <div class="field-grid field-grid-2">
+                  <label class="field field-stack"><span>In duration, ms</span><input id="inspectorEnterDuration" type="number" min="0" step="50" /></label>
+                  <label class="field field-stack"><span>In easing</span>
+                    <select id="inspectorEnterEasing"><option value="ease-out">Ease Out</option><option value="ease-in-out">Ease In Out</option><option value="linear">Linear</option><option value="spring">Spring</option></select>
+                  </label>
+                </div>
+              </section>
+              <section class="animation-direction-card">
+                <h3>Out</h3>
+                <label class="field field-stack"><span>Animation Out</span>
+                  <select id="inspectorExit">
+                    <option value="slideLeft">Slide Left</option><option value="slideRight">Slide Right</option>
+                    <option value="slideUp">Slide Up</option><option value="slideDown">Slide Down</option>
+                    <option value="scale">Scale</option><option value="fade">Fade</option><option value="none">None</option>
+                  </select>
+                </label>
+                <div class="field-grid field-grid-2">
+                  <label class="field field-stack"><span>Out duration, ms</span><input id="inspectorExitDuration" type="number" min="0" step="50" /></label>
+                  <label class="field field-stack"><span>Out easing</span>
+                    <select id="inspectorExitEasing"><option value="ease-out">Ease Out</option><option value="ease-in-out">Ease In Out</option><option value="linear">Linear</option><option value="spring">Spring</option></select>
+                  </label>
+                </div>
+              </section>
+              </fieldset>
+            </div>
+          </details>
+
+          <details id="contextualSettings" class="inspector-section legacy-section">
+            <summary>Object settings</summary>
+            <div class="section-body">
+              <div class="compatibility-fields" hidden>
+                <input id="left" type="number" />
+                <input id="fullBottom" type="number" />
+                <input id="tickerBottom" type="number" />
+              </div>
+
+              <div class="context-setting" data-context="full-card-shell full-cover full-vinyl ticker-group ticker-title ticker-time ticker-progress ticker-equalizer">
+                <h3>Размер объекта</h3>
+                <div class="field-grid field-grid-2">
+                  <label class="field field-stack" data-context="full-card-shell"><span>Card width</span><input id="fullCardWidth" type="number" /></label>
+                  <label class="field field-stack" data-context="ticker-group ticker-title ticker-time ticker-progress ticker-equalizer"><span>Ticker width</span><input id="tickerWidth" type="number" /></label>
+                  <label class="field field-stack" data-context="ticker-group ticker-title ticker-time ticker-progress ticker-equalizer"><span>Ticker height</span><input id="tickerHeight" type="number" /></label>
+                  <label class="field field-stack" data-context="full-cover"><span>Cover size</span><input id="coverSize" type="number" /></label>
+                  <label class="field field-stack" data-context="full-vinyl"><span>Vinyl size</span><input id="vinylSize" type="number" /></label>
+                </div>
+              </div>
+
+              <div class="context-setting" data-context="full-card-shell full-title full-artist full-time full-progress ticker-group ticker-title ticker-time ticker-progress">
+                <h3>Цвета</h3>
+                <label class="field marker-field" data-context="full-card-shell ticker-group"><span>Фон</span><input id="backgroundColor" type="color" /></label>
+                <label class="field field-stack" data-context="full-card-shell ticker-group"><span>Прозрачность фона, %</span><input id="backgroundOpacity" type="number" min="0" max="100" /></label>
+                <label class="field marker-field" data-context="full-title full-artist full-time ticker-title ticker-time"><span>Текст</span><input id="text" type="color" /></label>
+                <label class="field marker-field" data-context="full-progress ticker-progress"><span>Прогресс</span><input id="progress" type="color" /></label>
+                <label class="field marker-field" data-context="full-progress ticker-progress"><span>Фон прогресса</span><input id="progressBackgroundColor" type="color" /></label>
+                <label class="field field-stack" data-context="full-progress ticker-progress"><span>Прозрачность прогресса, %</span><input id="progressBackgroundOpacity" type="number" min="0" max="100" /></label>
+              </div>
+
+              <div class="context-setting" data-context="full-title full-artist full-card-shell full-vinyl ticker-group ticker-title ticker-time">
+                <h3>Typography & style</h3>
+                <label class="field field-stack" data-context="full-title full-artist ticker-title ticker-time"><span>Шрифт</span><select id="fontFamily"><option>Arial</option><option>Segoe UI</option><option>Tahoma</option><option>Verdana</option><option>Trebuchet MS</option><option>Georgia</option><option>Times New Roman</option><option>Consolas</option><option>Courier New</option><option>Impact</option><option>Comic Sans MS</option><option>Montserrat</option><option>Inter</option><option>Oswald</option><option>Orbitron</option></select></label>
+                <div class="field-grid field-grid-2">
+                  <label class="field field-stack" data-context="full-title"><span>Title size</span><input id="titleSize" type="number" /></label>
+                  <label class="field field-stack" data-context="full-artist"><span>Artist size</span><input id="artistSize" type="number" /></label>
+                  <label class="field field-stack" data-context="ticker-title ticker-time"><span>Ticker size</span><input id="tickerSize" type="number" /></label>
+                </div>
+                <label class="field field-stack" data-context="full-card-shell"><span>Card style</span><select id="fullCardStyle"><option value="glass">Glass</option><option value="solid">Solid</option><option value="minimal">Minimal</option><option value="neon">Neon</option><option value="spotify">Spotify</option></select></label>
+                <label class="field field-stack" data-context="ticker-group ticker-title ticker-time"><span>Ticker style</span><select id="tickerStyle"><option value="pill">Pill</option><option value="glass">Glass Box</option><option value="thin">Thin Bar</option><option value="compact">Compact</option><option value="textonly">Text Only</option></select></label>
+                <label class="field field-stack" data-context="full-vinyl"><span>Vinyl style</span><select id="vinylStyle"><option value="classic">Classic Vinyl</option><option value="black">Black Vinyl</option><option value="white">White Vinyl</option><option value="gold">Gold Vinyl</option><option value="transparent">Transparent Vinyl</option><option value="cd">CD Disc</option><option value="bloodMoon">Blood Moon</option></select></label>
+              </div>
+
+              <div class="compatibility-fields" hidden>
+                <input id="fullVisibleMs" type="number" />
+                <input id="coverDelayMs" type="number" />
+                <input id="cardDelayMs" type="number" />
+                <input id="exitMs" type="number" />
+                <input id="marqueeDelayMs" type="number" />
+                <input id="marqueeSpeedSec" type="number" />
+                <select id="fullEnterAnimation"><option value="slideLeft">Slide Left</option><option value="slideRight">Slide Right</option><option value="slideUp">Slide Up</option><option value="slideDown">Slide Down</option><option value="fade">Fade</option><option value="scale">Scale</option><option value="none">None</option></select>
+                <select id="fullExitAnimation"><option value="slideDown">Slide Down</option><option value="slideUp">Slide Up</option><option value="slideLeft">Slide Left</option><option value="slideRight">Slide Right</option><option value="fade">Fade</option><option value="scale">Scale</option><option value="none">None</option></select>
+                <select id="tickerEnterAnimation"><option value="slideUp">Slide Up</option><option value="slideDown">Slide Down</option><option value="slideLeft">Slide Left</option><option value="slideRight">Slide Right</option><option value="fade">Fade</option><option value="scale">Scale</option><option value="none">None</option></select>
+              </div>
+
+              <div class="context-setting" data-context="full-particles">
+                <h3>Particles</h3>
+                <label class="field compact-toggle"><span>Включить</span><input id="particlesEnabled" type="checkbox" /></label>
+                <label class="field field-stack"><span>Тип</span><select id="particlesStyle"><option value="notes">Ноты</option><option value="stars">Звезды</option><option value="hearts">Сердца</option><option value="sparkles">Искры</option><option value="pixels">Пиксели</option><option value="crosses">Кресты</option><option value="invertedCrosses">Перевернутые кресты</option></select></label>
+                <label class="field marker-field"><span>Цвет</span><input id="particlesColor" type="color" /></label>
+                <div class="field-grid field-grid-2">
+                  <label class="field field-stack"><span>Количество</span><input id="particlesCount" type="number" /></label>
+                  <label class="field field-stack"><span>Размер</span><input id="particlesSize" type="number" /></label>
+                  <label class="field field-stack"><span>Duration</span><input id="particlesDurationMs" type="number" /></label>
+                </div>
+              </div>
+
+              <div class="context-setting" data-context="ticker-equalizer">
+                <h3>Equalizer</h3>
+                <label class="field compact-toggle"><span>Включить</span><input id="equalizerEnabled" type="checkbox" /></label>
+                <label class="field field-stack"><span>FFT preset</span><select id="fftPreset"></select></label>
+                <label class="field field-stack"><span>Style</span><select id="equalizerStyle"><option value="solid">Solid</option><option value="neon">Neon</option><option value="rainbow">Rainbow</option><option value="soft">Soft</option><option value="minimal">Minimal</option><option value="pulse">Pulse</option></select></label>
+                <label class="field field-stack"><span>Color mode</span><select id="equalizerColorMode"><option value="progress">Цвет прогресса</option><option value="custom">Свой цвет</option></select></label>
+                <label class="field marker-field"><span>Свой цвет</span><input id="equalizerColor" type="color" /></label>
+                <div class="field-grid field-grid-2">
+                  <label class="field field-stack"><span>Bars</span><input id="equalizerBarCount" type="number" min="8" max="120" /></label>
+                  <label class="field field-stack"><span>Width</span><input id="equalizerBarWidth" type="number" /></label>
+                  <label class="field field-stack"><span>Gap</span><input id="equalizerGap" type="number" /></label>
+                  <label class="field field-stack"><span>Height</span><input id="equalizerHeight" type="number" /></label>
+                  <label class="field field-stack"><span>Offset Y</span><input id="equalizerOffsetY" type="number" /></label>
+                  <label class="field field-stack"><span>Side padding</span><input id="equalizerSidePadding" type="number" /></label>
+                  <label class="field field-stack"><span>Sensitivity ×100</span><input id="equalizerSensitivity" type="number" /></label>
+                  <label class="field field-stack"><span>Smoothing %</span><input id="equalizerSmoothing" type="number" /></label>
+                  <label class="field field-stack"><span>Output gain ×100</span><input id="equalizerOutputGain" type="number" /></label>
+                  <label class="field field-stack"><span>Contrast ×100</span><input id="equalizerSpectralContrast" type="number" /></label>
+                  <label class="field field-stack"><span>Curve ×100</span><input id="equalizerVisualCurvePower" type="number" /></label>
+                  <label class="field field-stack"><span>Glow power</span><input id="equalizerGlowPower" type="number" /></label>
+                </div>
+                <label class="field compact-toggle"><span>Auto gain</span><input id="equalizerAutoGain" type="checkbox" /></label>
+                <label class="field compact-toggle"><span>Glow</span><input id="equalizerGlow" type="checkbox" /></label>
+              </div>
+              <div id="dynamicObjectSettings" class="context-setting dynamic-object-settings"></div>
+            </div>
+          </details>
+        </div>
+
+        <div id="globalSettingsPane" class="panel-scroll sidebar-pane">
+          <section class="inspector-card">
+            <span class="eyebrow">Application</span>
+            <h2>Global Settings</h2>
+            <p class="micro-hint">Параметры приложения, не привязанные к объектам композиции.</p>
+          </section>
+          <details class="inspector-section legacy-section">
+            <summary>Audio source</summary>
+            <div class="section-body">
+              <label class="field field-stack"><span>Источник звука</span><select id="audioSourceMode"><option value="auto">Auto</option><option value="process">Process</option><option value="system">System</option></select></label>
+              <div class="audio-status"><span>Mode: <b id="captureStatusMode">—</b></span><span>Source: <b id="captureStatusSource">—</b></span><span>PID: <b id="captureStatusPid">—</b></span><span>Error: <b id="captureStatusError">—</b></span></div>
+              <div class="now-playing-status">
+                <img id="liveCoverPreview" src="/assets/default-cover.png" alt="Current cover" />
+                <div><b id="liveTrackTitle">Нет активного трека</b><span id="liveTrackArtist">—</span></div>
+              </div>
+            </div>
+          </details>
+          <details class="inspector-section legacy-section">
+            <summary>Album art fallback</summary>
+            <div class="section-body">
+              <label class="field compact-toggle"><span>Windows thumbnail</span><input id="useWindowsThumbnail" type="checkbox" /></label>
+              <label class="file-field">Своя обложка<input id="defaultCoverFile" type="file" accept="image/*" /></label>
+              <img id="defaultCoverPreview" class="cover-preview" src="/assets/default-cover.png" alt="Default cover" />
+            </div>
+          </details>
+        </div>
+      </aside>
+
+      <section class="editor-panel canvas-panel" aria-label="Canvas preview">
+        <div class="canvas-toolbar">
+          <div>
+            <span class="eyebrow">Composition</span>
+            <h2>Canvas / Preview</h2>
+          </div>
+          <label class="canvas-background-control">
+            <span>Цвет фона</span>
+            <input id="canvasBackgroundColor" type="color" value="#00a84f" />
+          </label>
+        </div>
+
+        <div id="canvasViewport" class="canvas-viewport">
+          <div id="canvasSurface" class="canvas-surface">
+            <div class="safe-area" aria-hidden="true"></div>
+            <div id="scenePreviewMount" class="editor-scene-mount" aria-label="Draft scene preview"></div>
+
+            <div id="selectionBounds" class="selection-bounds" aria-hidden="true">
+              <button id="selectionResizeHandle" class="selection-resize-handle" type="button" title="Изменить размер"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-footer">
+          <span class="canvas-meta" title="Drag — перемещение · маркер рамки — размер · Shift — без сетки">1920 × 1080</span>
+          <div class="canvas-transport" aria-label="Управление предпросмотром">
+            <button id="playTimelineBtn" class="icon-button" title="Запустить timeline">▶</button>
+            <button id="stopTimelineBtn" class="icon-button" title="Остановить и вернуться в начало">■</button>
+            <span id="previewTimeLabel" class="timecode">00:00.000</span>
+          </div>
+          <label class="canvas-zoom-control">Zoom <input id="canvasZoom" type="range" min="25" max="300" value="100" /></label>
+        </div>
+      </section>
+
+      <aside class="editor-panel library-panel" aria-label="Objects and animations">
+        <div class="panel-heading">
+          <div><span class="eyebrow">Library</span><h2 data-i18n="objects">Объекты</h2></div>
+          <button id="uploadLibraryObjectBtn" class="button button-secondary library-upload" data-i18n="uploadObject">+ Свой объект</button>
+          <input id="libraryObjectFile" type="file" accept="image/*" hidden />
+        </div>
+        <div class="panel-scroll library-scroll">
+          <div id="libraryPreview" class="library-preview"><span class="library-preview-icon">↳</span><div><b data-i18n="libraryHintTitle">Выберите объект</b><small data-i18n="libraryHint">Откройте категорию, посмотрите preview и перетащите карточку на Timeline.</small></div></div>
+          <div id="objectLibrary" class="object-library"></div>
+        </div>
+      </aside>
+
+      <section class="editor-panel timeline-panel" aria-label="Layers and timeline">
+        <div class="timeline-toolbar">
+          <div>
+            <h2>Layers / Timeline</h2>
+            <small class="timeline-concept" data-i18n="groupTimingRule">Группа задаёт окно. Вложенные объекты не выходят за его конец.</small>
+          </div>
+          <div class="timeline-actions">
+            <label class="composition-duration" title="Длина предпросмотра композиции">
+              <span>Композиция</span>
+              <input id="compositionDurationSec" type="number" min="1" max="180" value="30" step="1" />
+              <span>сек</span>
+            </label>
+            <button id="addGroupBtn" class="button button-secondary">+ Group</button>
+            <button id="deleteGroupBtn" class="button button-ghost">Удалить группу</button>
+          </div>
+        </div>
+
+        <div class="timeline-scroll">
+          <div id="timelineRuler" class="timeline-ruler"></div>
+          <div id="timelineBody" class="timeline-body"></div>
+          <div id="timelinePlayhead" class="timeline-playhead"><span></span></div>
+          <div id="timelineSnapGuide" class="timeline-snap-guide"></div>
+        </div>
+      </section>
+
+      <div class="workspace-resizer resizer-inspector" data-resize="inspector" title="Изменить ширину Inspector"></div>
+      <div class="workspace-resizer resizer-library" data-resize="library" title="Изменить ширину Library"></div>
+      <div class="workspace-resizer resizer-timeline" data-resize="timeline" title="Изменить высоту Timeline"></div>
+      <div class="workspace-resizer resizer-corner-left" data-resize="corner-left" title="Изменить Inspector и Timeline"></div>
+      <div class="workspace-resizer resizer-corner-right" data-resize="corner-right" title="Изменить Preview, Library и Timeline"></div>
+    </div>
+  </main>
+
+  <dialog id="themeSaveDialog" class="theme-dialog">
+    <form method="dialog" class="theme-dialog-card">
+      <div class="theme-dialog-heading">
+        <div><span class="eyebrow">Theme library</span><h2>Сохранить тему</h2></div>
+        <button class="dialog-close" value="cancel" aria-label="Закрыть">×</button>
+      </div>
+      <label class="theme-save-option">
+        <input id="themeSaveModeNew" type="radio" name="themeSaveMode" value="new" checked />
+        <span><b>Сохранить как новую</b><small>Создать отдельную тему с новым названием</small></span>
+      </label>
+      <label class="theme-save-option">
+        <input id="themeSaveModeOverwrite" type="radio" name="themeSaveMode" value="overwrite" />
+        <span><b>Перезаписать выбранную</b><small id="themeOverwriteHint">Доступно для пользовательских тем</small></span>
+      </label>
+      <label id="themeNameField" class="field field-stack"><span>Название новой темы</span><input id="customThemeName" type="text" placeholder="Например, Neon Stream" /></label>
+      <div class="dialog-actions">
+        <button class="button button-ghost" value="cancel">Отмена</button>
+        <button id="confirmThemeSaveBtn" class="button button-primary" value="confirm">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="editor/core/namespace.js?v=2.1.0"></script>
+  <script src="editor/core/event-bus.js?v=2.1.0"></script>
+  <script src="editor/core/ui-status.js?v=2.1.0"></script>
+  <script src="editor/core/i18n.js?v=2.1.0"></script>
+  <script src="editor/compat/legacy-editor-state.js?v=2.1.0"></script>
+  <script src="editor/compat/legacy-editor-runtime.js?v=2.1.0"></script>
+  <script src="editor/api/api-client.js?v=2.1.0"></script>
+  <script src="editor/api/scene-api.js?v=2.1.0"></script>
+  <script src="editor/api/theme-api.js?v=2.1.0"></script>
+  <script src="editor/api/live-api.js?v=2.1.0"></script>
+  <script src="editor/canvas-controller.js?v=2.1.0"></script>
+  <script src="editor/timeline-controller.js?v=2.1.0"></script>
+  <script src="editor/workspace-controller.js?v=2.1.0"></script>
+  <script src="shared/scene-order.js?v=2.1.0"></script>
+  <script src="shared/layer-renderer.js?v=2.1.0"></script>
+  <script src="shared/scene-timeline.js?v=2.1.0"></script>
+  <script src="shared/component-registry.js?v=2.1.0"></script>
+  <script src="shared/scene-renderer.js?v=2.1.0"></script>
+  <script src="shared/fft-presets.js?v=2.1.0"></script>
+  <script src="editor/scene-editor-model.js?v=2.1.0"></script>
+  <script src="editor/core/editor-foundation.js?v=2.1.0"></script>
+  <script src="editor/inspector/inspector-controller.js?v=2.1.0"></script>
+  <script src="editor/preview/preview-sync-controller.js?v=2.1.0"></script>
+  <script src="editor/timeline/timeline-editor-controller.js?v=2.1.0"></script>
+  <script src="editor/library/library-controller.js?v=2.1.0"></script>
+  <script src="editor/canvas/canvas-editor-controller.js?v=2.1.0"></script>
+  <script src="editor/themes/theme-controller.js?v=2.1.0"></script>
+  <script src="editor/persistence/draft-save-scheduler.js?v=2.1.0"></script>
+  <script src="editor/bootstrap.js?v=2.1.0"></script>
+  <script src="settings.js?v=2.1.0"></script>
+</body>
+</html>

@@ -1,0 +1,1046 @@
+{
+  "$schema": "/schemas/scene-v2.schema.json",
+  "schemaVersion": 2,
+  "documentType": "music-overlay.scene",
+  "id": "workspace-draft",
+  "revision": 39,
+  "metadata": {
+    "name": "Draft",
+    "themeType": "workspace",
+    "sourceThemeId": "anime-pink",
+    "authoredBy": "overlay-editor"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "backgroundColor": "#054d00",
+    "frameRate": 60,
+    "scaleMode": "contain"
+  },
+  "timeline": {
+    "durationMs": 30000,
+    "restartOnPublish": true
+  },
+  "appearance": {
+    "colors": {
+      "background": "rgba(45, 12, 38, 0.82)",
+      "text": "#ffe6f5",
+      "progress": "#ff7ad9",
+      "progressBackground": "rgba(255, 122, 217, 0.22)"
+    },
+    "font": {
+      "family": "Trebuchet MS",
+      "titleSize": 25,
+      "artistSize": 16,
+      "tickerSize": 14
+    },
+    "albumArt": {
+      "useWindowsThumbnail": true,
+      "defaultCover": "/assets/default-cover.png"
+    },
+    "ticker": {
+      "style": "glass"
+    },
+    "fullCard": {
+      "style": "glass"
+    },
+    "vinyl": {
+      "style": "cd"
+    },
+    "particles": {
+      "enabled": true,
+      "style": "hearts",
+      "count": 2,
+      "size": 18,
+      "durationMs": 2200,
+      "color": "#ff7ad9"
+    },
+    "equalizer": {
+      "enabled": true,
+      "style": "neon",
+      "barCount": 56,
+      "barWidth": 5,
+      "gap": 3,
+      "height": 78,
+      "offsetY": 1,
+      "sidePadding": 8,
+      "preset": "dynamicBars",
+      "sensitivity": 1.12,
+      "smoothing": 0.28,
+      "autoGain": true,
+      "outputGain": 1,
+      "spectralContrast": 1,
+      "visualCurvePower": 1,
+      "glow": true,
+      "glowPower": 24,
+      "colorMode": "progress",
+      "color": "#ff7ad9"
+    }
+  },
+  "nodes": [
+    {
+      "id": "full-card-group",
+      "nodeType": "group",
+      "name": "Full Card",
+      "parentId": null,
+      "order": 0,
+      "visible": true,
+      "locked": false,
+      "marker": "#8b5cf6",
+      "transform": {
+        "x": 70,
+        "y": 850,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 0,
+        "endMode": "fixed",
+        "durationMs": 10000
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideRight",
+          "durationMs": 600,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "slideDown",
+          "durationMs": 600,
+          "easing": "ease-out"
+        },
+        "overrideChildren": true
+      },
+      "component": {
+        "kind": "group",
+        "runtimeTarget": "full",
+        "properties": {
+          "width": 540,
+          "height": 150
+        }
+      }
+    },
+    {
+      "id": "ticker-group",
+      "nodeType": "group",
+      "name": "Ticker / Until next track",
+      "parentId": null,
+      "order": 1,
+      "visible": true,
+      "locked": false,
+      "marker": "#35d0ba",
+      "transform": {
+        "x": 70,
+        "y": 994,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 10000,
+        "endMode": "trackEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideUp",
+          "durationMs": 600,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "none",
+          "durationMs": 600,
+          "easing": "ease-out"
+        },
+        "overrideChildren": true
+      },
+      "component": {
+        "kind": "group",
+        "runtimeTarget": "ticker",
+        "properties": {
+          "width": 500,
+          "height": 42
+        }
+      }
+    },
+    {
+      "id": "full-particles",
+      "nodeType": "component",
+      "name": "Particles",
+      "parentId": "full-card-group",
+      "order": 0,
+      "visible": true,
+      "locked": false,
+      "marker": "#e879f9",
+      "transform": {
+        "x": 22,
+        "y": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 0,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "fade",
+          "durationMs": 350,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "slideDown",
+          "durationMs": 350,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "particles",
+        "templateId": null,
+        "properties": {
+          "width": 260,
+          "height": 120,
+          "count": 2,
+          "color": "#ff7ad9",
+          "style": "hearts",
+          "size": 18,
+          "durationMs": 2200
+        }
+      }
+    },
+    {
+      "id": "ticker-equalizer",
+      "nodeType": "component",
+      "name": "Equalizer",
+      "parentId": "ticker-group",
+      "order": 0,
+      "visible": true,
+      "locked": false,
+      "marker": "#e879f9",
+      "transform": {
+        "x": 8,
+        "y": -78,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 0,
+        "endMode": "trackEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideUp",
+          "durationMs": 500,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 500,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "equalizer",
+        "templateId": null,
+        "properties": {
+          "width": 484,
+          "height": 78,
+          "barCount": 56,
+          "gap": 3,
+          "style": "neon",
+          "color": "#ff7ad9",
+          "glow": true,
+          "glowPower": 24,
+          "fftPreset": "dynamicBars"
+        }
+      }
+    },
+    {
+      "id": "full-cover",
+      "nodeType": "component",
+      "name": "Cover",
+      "parentId": "full-card-group",
+      "order": 1,
+      "visible": true,
+      "locked": false,
+      "marker": "#fb7185",
+      "transform": {
+        "x": 0,
+        "y": 29,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 500,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "scale",
+          "durationMs": 450,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "slideDown",
+          "durationMs": 450,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "image",
+        "templateId": null,
+        "properties": {
+          "width": 92,
+          "height": 92,
+          "borderRadius": 14,
+          "source": "track"
+        }
+      }
+    },
+    {
+      "id": "ticker-title",
+      "nodeType": "component",
+      "name": "Ticker title",
+      "parentId": "ticker-group",
+      "order": 1,
+      "visible": true,
+      "locked": false,
+      "marker": "#4da3ff",
+      "transform": {
+        "x": 16,
+        "y": 6,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 0,
+        "endMode": "trackEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideUp",
+          "durationMs": 500,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 500,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "text",
+        "templateId": null,
+        "properties": {
+          "binding": "ticker",
+          "width": 350,
+          "fontSize": 14,
+          "color": "#ffe6f5",
+          "fontWeight": 800
+        }
+      }
+    },
+    {
+      "id": "full-vinyl",
+      "nodeType": "component",
+      "name": "Vinyl",
+      "parentId": "full-card-group",
+      "order": 2,
+      "visible": true,
+      "locked": false,
+      "marker": "#ff9f43",
+      "transform": {
+        "x": 18.400000000000002,
+        "y": 21,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 500,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideLeft",
+          "durationMs": 500,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "slideDown",
+          "durationMs": 500,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "disc",
+        "templateId": null,
+        "properties": {
+          "size": 108,
+          "style": "cd",
+          "speedSec": 2.8
+        }
+      }
+    },
+    {
+      "id": "ticker-time",
+      "nodeType": "component",
+      "name": "Ticker time",
+      "parentId": "ticker-group",
+      "order": 2,
+      "visible": true,
+      "locked": false,
+      "marker": "#35d0ba",
+      "transform": {
+        "x": 384,
+        "y": 7,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 0,
+        "endMode": "trackEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "fade",
+          "durationMs": 350,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 350,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "time",
+        "templateId": null,
+        "properties": {
+          "binding": "time",
+          "width": 100,
+          "fontSize": 12,
+          "color": "#ffe6f5"
+        }
+      }
+    },
+    {
+      "id": "full-title",
+      "nodeType": "component",
+      "name": "Title",
+      "parentId": "full-card-group",
+      "order": 3,
+      "visible": true,
+      "locked": false,
+      "marker": "#4da3ff",
+      "transform": {
+        "x": 144,
+        "y": 38.5,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 850,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideRight",
+          "durationMs": 450,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "slideDown",
+          "durationMs": 450,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "text",
+        "templateId": null,
+        "properties": {
+          "binding": "title",
+          "width": 372,
+          "fontSize": 25,
+          "color": "#ffe6f5",
+          "fontWeight": 800
+        }
+      }
+    },
+    {
+      "id": "ticker-progress",
+      "nodeType": "component",
+      "name": "Ticker progress",
+      "parentId": "ticker-group",
+      "order": 3,
+      "visible": true,
+      "locked": false,
+      "marker": "#35d0ba",
+      "transform": {
+        "x": 16,
+        "y": 32,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 0,
+        "endMode": "trackEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "fade",
+          "durationMs": 350,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 350,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "progress",
+        "templateId": null,
+        "properties": {
+          "binding": "progress",
+          "width": 468,
+          "height": 4,
+          "borderRadius": 999,
+          "color": "#ff7ad9",
+          "background": "rgba(255, 122, 217, 0.22)"
+        }
+      }
+    },
+    {
+      "id": "full-artist",
+      "nodeType": "component",
+      "name": "Artist",
+      "parentId": "full-card-group",
+      "order": 4,
+      "visible": true,
+      "locked": false,
+      "marker": "#4da3ff",
+      "transform": {
+        "x": 144,
+        "y": 70.5,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 850,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideRight",
+          "durationMs": 450,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "slideDown",
+          "durationMs": 450,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "text",
+        "templateId": null,
+        "properties": {
+          "binding": "artist",
+          "width": 372,
+          "fontSize": 16,
+          "color": "#ffe6f5",
+          "fontWeight": 400
+        }
+      }
+    },
+    {
+      "id": "ticker-group-background",
+      "nodeType": "component",
+      "name": "Ticker / Until next track \u00B7 Background",
+      "parentId": "ticker-group",
+      "order": 4,
+      "visible": true,
+      "locked": false,
+      "marker": "#35d0ba",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 0,
+        "endMode": "trackEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "none",
+          "durationMs": 0,
+          "easing": "linear"
+        },
+        "out": {
+          "type": "none",
+          "durationMs": 0,
+          "easing": "linear"
+        }
+      },
+      "component": {
+        "kind": "block",
+        "templateId": "block-glass",
+        "properties": {
+          "width": 500,
+          "height": 42,
+          "borderRadius": 18,
+          "color": "rgba(45, 12, 38, 0.82)",
+          "style": "glass"
+        }
+      }
+    },
+    {
+      "id": "full-time",
+      "nodeType": "component",
+      "name": "Time",
+      "parentId": "full-card-group",
+      "order": 5,
+      "visible": true,
+      "locked": false,
+      "marker": "#35d0ba",
+      "transform": {
+        "x": 144,
+        "y": 102.5,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 850,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "fade",
+          "durationMs": 350,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "slideDown",
+          "durationMs": 350,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "time",
+        "templateId": null,
+        "properties": {
+          "binding": "time",
+          "width": 372,
+          "fontSize": 13,
+          "color": "#ffe6f5"
+        }
+      }
+    },
+    {
+      "id": "full-progress",
+      "nodeType": "component",
+      "name": "Progress",
+      "parentId": "full-card-group",
+      "order": 6,
+      "visible": true,
+      "locked": false,
+      "marker": "#35d0ba",
+      "transform": {
+        "x": 144,
+        "y": 124.5,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 850,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "fade",
+          "durationMs": 350,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "slideDown",
+          "durationMs": 350,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "progress",
+        "templateId": null,
+        "properties": {
+          "binding": "progress",
+          "width": 372,
+          "height": 6,
+          "borderRadius": 999,
+          "color": "#ff7ad9",
+          "background": "rgba(255, 122, 217, 0.22)"
+        }
+      }
+    },
+    {
+      "id": "full-card-shell",
+      "nodeType": "component",
+      "name": "Card container",
+      "parentId": "full-card-group",
+      "order": 7,
+      "visible": true,
+      "locked": true,
+      "marker": "#8b5cf6",
+      "transform": {
+        "x": 110,
+        "y": 20.5,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 850,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideRight",
+          "durationMs": 350,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "slideDown",
+          "durationMs": 350,
+          "easing": "ease-out"
+        }
+      },
+      "component": {
+        "kind": "container",
+        "templateId": null,
+        "properties": {
+          "width": 430,
+          "height": 109,
+          "borderRadius": 18,
+          "color": "rgba(45, 12, 38, 0.82)",
+          "style": "glass"
+        }
+      }
+    }
+  ],
+  "extensions": {
+    "musicOverlay.editor": {
+      "modelVersion": 2
+    }
+  }
+}

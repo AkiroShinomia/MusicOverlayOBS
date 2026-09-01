@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://musicoverlay.local/schemas/scene-v2.schema.json",
+  "title": "Music Overlay Scene Document v2",
+  "type": "object",
+  "required": ["schemaVersion", "documentType", "id", "revision", "metadata", "canvas", "timeline", "appearance", "nodes"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "documentType": { "const": "music-overlay.scene" },
+    "id": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "themeType"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "themeType": { "enum": ["builtin", "custom", "workspace"] },
+        "sourceThemeId": { "type": ["string", "null"] },
+        "migratedFrom": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "canvas": {
+      "type": "object",
+      "required": ["width", "height", "backgroundColor", "frameRate", "scaleMode"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "backgroundColor": { "type": "string" },
+        "frameRate": { "type": "number", "exclusiveMinimum": 0 },
+        "scaleMode": { "enum": ["contain", "cover", "stretch", "1:1"] }
+      },
+      "additionalProperties": true
+    },
+    "timeline": {
+      "type": "object",
+      "required": ["durationMs", "restartOnPublish"],
+      "properties": {
+        "durationMs": { "type": "number", "minimum": 1000, "maximum": 180000 },
+        "restartOnPublish": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "appearance": { "type": "object", "additionalProperties": true },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "extensions": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["id", "nodeType", "name", "order", "visible", "locked", "transform", "timing", "effects", "animations", "component"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "nodeType": { "enum": ["group", "component"] },
+        "name": { "type": "string" },
+        "parentId": { "type": ["string", "null"] },
+        "order": { "type": "integer", "minimum": 0 },
+        "visible": { "type": "boolean" },
+        "locked": { "type": "boolean" },
+        "marker": { "type": "string" },
+        "transform": {
+          "type": "object",
+          "required": ["x", "y", "scaleX", "scaleY", "rotation", "anchorX", "anchorY"],
+          "additionalProperties": true
+        },
+        "timing": {
+          "type": "object",
+          "required": ["startMs", "endMode"],
+          "properties": {
+            "startMs": { "type": "number", "minimum": 0 },
+            "endMode": { "enum": ["fixed", "parentEnd", "trackEnd"] },
+            "durationMs": { "type": ["number", "null"], "minimum": 0 }
+          },
+          "additionalProperties": true
+        },
+        "effects": { "type": "array", "items": { "type": "object" } },
+        "animations": {
+          "type": "object",
+          "required": ["in", "out"],
+          "properties": {
+            "overrideChildren": { "type": "boolean" },
+            "in": { "type": "object" },
+            "out": { "type": "object" }
+          },
+          "additionalProperties": true
+        },
+        "component": {
+          "type": "object",
+          "required": ["kind", "properties"],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

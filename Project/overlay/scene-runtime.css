@@ -1,0 +1,18 @@
+:root { color-scheme: dark; background: transparent; }
+* { box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; margin: 0; overflow: hidden; background: transparent !important; }
+body { position: relative; pointer-events: none; }
+#sceneRuntimeMount { position: absolute; inset: 0; overflow: visible; background: transparent !important; transition: none; }
+body:not(.has-active-track) #sceneRuntimeMount { visibility: hidden; }
+body[data-runtime-state="error"]::after {
+  content: "MusicOverlay renderer error";
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  padding: 6px 9px;
+  color: #ff9bab;
+  border: 1px solid #ff546b;
+  border-radius: 6px;
+  background: rgba(40,0,8,.78);
+  font: 12px/1.2 Consolas, monospace;
+}

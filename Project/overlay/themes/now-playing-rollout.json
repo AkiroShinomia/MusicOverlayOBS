@@ -1,0 +1,546 @@
+{
+  "$schema": "/schemas/scene-v2.schema.json",
+  "schemaVersion": 2,
+  "documentType": "music-overlay.scene",
+  "id": "theme-now-playing-rollout",
+  "revision": 1,
+  "metadata": {
+    "name": "Now Playing Rollout",
+    "themeType": "builtin",
+    "sourceThemeId": "now-playing-rollout",
+    "migratedFrom": "legacy-config-v1"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "backgroundColor": "#00a84f",
+    "frameRate": 60,
+    "scaleMode": "contain"
+  },
+  "timeline": {
+    "durationMs": 30000,
+    "restartOnPublish": true
+  },
+  "appearance": {
+    "colors": {
+      "background": "rgba(92, 96, 108, 0.94)",
+      "text": "#ffffff",
+      "progress": "#74ff70",
+      "progressBackground": "rgba(255, 255, 255, 0.20)"
+    },
+    "font": {
+      "family": "Segoe UI",
+      "titleSize": 27,
+      "artistSize": 19,
+      "tickerSize": 16
+    },
+    "albumArt": {
+      "useWindowsThumbnail": false,
+      "defaultCover": "/assets/default-cover.png"
+    },
+    "ticker": {
+      "style": "glass"
+    },
+    "fullCard": {
+      "style": "glass"
+    },
+    "vinyl": {
+      "style": "cd"
+    },
+    "particles": {
+      "enabled": false,
+      "style": "notes",
+      "count": 0,
+      "size": 12,
+      "durationMs": 1800,
+      "color": "#ffffff"
+    },
+    "equalizer": {
+      "enabled": true,
+      "style": "minimal",
+      "barCount": 72,
+      "barWidth": 2,
+      "gap": 1,
+      "height": 34,
+      "offsetY": 0,
+      "sidePadding": 0,
+      "preset": "dynamicBars",
+      "sensitivity": 1.12,
+      "smoothing": 0.28,
+      "autoGain": true,
+      "outputGain": 1.0,
+      "spectralContrast": 1.0,
+      "visualCurvePower": 1.0,
+      "glow": false,
+      "glowPower": 0,
+      "colorMode": "custom",
+      "color": "#ffffff"
+    }
+  },
+  "nodes": [
+    {
+      "id": "rollout-card-group",
+      "nodeType": "group",
+      "name": "Now Playing Rollout",
+      "parentId": null,
+      "order": 0,
+      "visible": true,
+      "locked": false,
+      "marker": "#74ff70",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 0,
+        "endMode": "fixed",
+        "durationMs": 4500
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "none",
+          "durationMs": 0,
+          "easing": "linear"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 450,
+          "easing": "ease-in-out"
+        },
+        "overrideChildren": false
+      },
+      "component": {
+        "kind": "group",
+        "templateId": null,
+        "runtimeTarget": null,
+        "properties": {}
+      }
+    },
+    {
+      "id": "rollout-cover",
+      "nodeType": "component",
+      "name": "Round cover",
+      "parentId": "rollout-card-group",
+      "order": 0,
+      "visible": true,
+      "locked": false,
+      "marker": "#74ff70",
+      "transform": {
+        "x": 1030,
+        "y": 440,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 0,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": true,
+          "value": 10
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "rollRight",
+          "durationMs": 850,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 350,
+          "easing": "ease-in-out"
+        }
+      },
+      "component": {
+        "kind": "image",
+        "templateId": "cover-round",
+        "runtimeTarget": null,
+        "properties": {
+          "width": 140,
+          "height": 140,
+          "borderRadius": 70,
+          "source": "track",
+          "outline": 5,
+          "outlineColor": "#ffffff"
+        }
+      }
+    },
+    {
+      "id": "rollout-now-playing",
+      "nodeType": "component",
+      "name": "Now Playing",
+      "parentId": "rollout-card-group",
+      "order": 1,
+      "visible": true,
+      "locked": false,
+      "marker": "#74ff70",
+      "transform": {
+        "x": 680,
+        "y": 450,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 380,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideRight",
+          "durationMs": 560,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 300,
+          "easing": "ease-in-out"
+        }
+      },
+      "component": {
+        "kind": "text",
+        "templateId": "now-playing-text",
+        "runtimeTarget": null,
+        "properties": {
+          "binding": "custom",
+          "text": "Now Playing",
+          "width": 320,
+          "fontSize": 24,
+          "fontWeight": 850,
+          "color": "#ffffff",
+          "accentWord": "Playing",
+          "accentColor": "#74ff70"
+        }
+      }
+    },
+    {
+      "id": "rollout-title",
+      "nodeType": "component",
+      "name": "Track title",
+      "parentId": "rollout-card-group",
+      "order": 2,
+      "visible": true,
+      "locked": false,
+      "marker": "#ffffff",
+      "transform": {
+        "x": 680,
+        "y": 490,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 480,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 100
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideRight",
+          "durationMs": 600,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 300,
+          "easing": "ease-in-out"
+        }
+      },
+      "component": {
+        "kind": "text",
+        "templateId": "track-title",
+        "runtimeTarget": null,
+        "properties": {
+          "binding": "title",
+          "text": "Track title",
+          "width": 330,
+          "fontSize": 27,
+          "fontWeight": 800,
+          "color": "#ffffff"
+        }
+      }
+    },
+    {
+      "id": "rollout-artist",
+      "nodeType": "component",
+      "name": "Artist",
+      "parentId": "rollout-card-group",
+      "order": 3,
+      "visible": true,
+      "locked": false,
+      "marker": "#dfe3eb",
+      "transform": {
+        "x": 680,
+        "y": 526,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 560,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 88
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideRight",
+          "durationMs": 620,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 300,
+          "easing": "ease-in-out"
+        }
+      },
+      "component": {
+        "kind": "text",
+        "templateId": "track-artist",
+        "runtimeTarget": null,
+        "properties": {
+          "binding": "artist",
+          "text": "Artist",
+          "width": 330,
+          "fontSize": 19,
+          "fontWeight": 650,
+          "color": "#e3e6ed"
+        }
+      }
+    },
+    {
+      "id": "rollout-waveform",
+      "nodeType": "component",
+      "name": "Waveform equalizer",
+      "parentId": "rollout-card-group",
+      "order": 4,
+      "visible": true,
+      "locked": false,
+      "marker": "#ffffff",
+      "transform": {
+        "x": 680,
+        "y": 556,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 650,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 82
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": false,
+          "value": 0
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideRight",
+          "durationMs": 650,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 300,
+          "easing": "ease-in-out"
+        }
+      },
+      "component": {
+        "kind": "equalizer",
+        "templateId": "equalizer-waveform",
+        "runtimeTarget": null,
+        "properties": {
+          "width": 300,
+          "height": 30,
+          "barCount": 72,
+          "gap": 1,
+          "style": "waveform",
+          "color": "#ffffff",
+          "fftPreset": "dynamicBars"
+        }
+      }
+    },
+    {
+      "id": "rollout-card-background",
+      "nodeType": "component",
+      "name": "Card background",
+      "parentId": "rollout-card-group",
+      "order": 5,
+      "visible": true,
+      "locked": false,
+      "marker": "#707582",
+      "transform": {
+        "x": 650,
+        "y": 430,
+        "scaleX": 1,
+        "scaleY": 1,
+        "rotation": 0,
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "timing": {
+        "startMs": 250,
+        "endMode": "parentEnd",
+        "durationMs": null
+      },
+      "effects": [
+        {
+          "type": "opacity",
+          "enabled": true,
+          "value": 96
+        },
+        {
+          "type": "blur",
+          "enabled": false,
+          "value": 0
+        },
+        {
+          "type": "glow",
+          "enabled": true,
+          "value": 12
+        }
+      ],
+      "animations": {
+        "in": {
+          "type": "slideRight",
+          "durationMs": 720,
+          "easing": "ease-out"
+        },
+        "out": {
+          "type": "fade",
+          "durationMs": 400,
+          "easing": "ease-in-out"
+        }
+      },
+      "component": {
+        "kind": "block",
+        "templateId": "block-glass",
+        "runtimeTarget": null,
+        "properties": {
+          "width": 450,
+          "height": 160,
+          "color": "#6f7380",
+          "borderRadius": 20
+        }
+      }
+    }
+  ],
+  "extensions": {
+    "musicOverlay.geometry": {
+      "schemaVersion": 1,
+      "coordinateSpace": "canvas",
+      "materializedFrom": "already-native-v2"
+    }
+  }
+}

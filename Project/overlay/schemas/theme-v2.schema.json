@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://musicoverlay.local/schemas/theme-v2.schema.json",
+  "title": "Music Overlay Theme Document v2",
+  "type": "object",
+  "required": ["schemaVersion", "documentType", "id", "revision", "metadata", "scene"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "documentType": { "const": "music-overlay.theme" },
+    "id": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "themeType", "sourceThemeId"],
+      "additionalProperties": true
+    },
+    "scene": {
+      "type": "object",
+      "required": ["ref", "overrides"],
+      "properties": {
+        "ref": { "type": "string", "pattern": "^/scenes/" },
+        "overrides": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://musicoverlay.local/schemas/settings-v1.schema.json",
+  "title": "Music Overlay Global Settings v1",
+  "type": "object",
+  "required": ["schemaVersion", "documentType", "audio", "preview", "editor"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "documentType": { "const": "music-overlay.settings" },
+    "audio": {
+      "type": "object",
+      "required": ["sourceMode"],
+      "properties": {
+        "sourceMode": { "enum": ["auto", "process", "system"] }
+      },
+      "additionalProperties": true
+    },
+    "preview": {
+      "type": "object",
+      "required": ["dataSource", "syncWithWebSocket"],
+      "properties": {
+        "dataSource": { "enum": ["live", "demo"] },
+        "syncWithWebSocket": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "editor": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true
+}

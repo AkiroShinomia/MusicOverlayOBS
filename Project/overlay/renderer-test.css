@@ -1,0 +1,27 @@
+* { box-sizing: border-box; }
+:root { color-scheme: dark; font-family: "Segoe UI",Arial,sans-serif; background:#090d13; color:#e9eef7; }
+body { min-width:1100px; margin:0; overflow:hidden; }
+button,select,input { font:inherit; }
+button,select { padding:7px 10px; color:#e9eef7; border:1px solid #354158; border-radius:7px; background:#141c28; }
+button { cursor:pointer; }
+.test-toolbar { height:54px; display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid #273142; background:#101620; }
+.test-toolbar strong { margin-right:12px; color:#b69cff; }
+.test-toolbar label { display:flex; align-items:center; gap:6px; color:#93a0b3; font-size:12px; }
+#checkStatus { margin-left:auto; color:#5fe0c8; font:12px Consolas,monospace; }
+.test-layout { height:calc(100vh - 54px); display:grid; grid-template-columns:minmax(0,1fr) 350px; }
+.test-preview-panel { min-width:0; display:grid; grid-template-rows:44px 1fr; }
+.test-preview-header { display:flex; align-items:center; gap:12px; padding:8px 14px; border-bottom:1px solid #202a39; background:#0d131c; }
+.test-preview-header label { display:flex; align-items:center; gap:8px; color:#8795a9; font-size:12px; }
+#sceneTime { width:min(40vw,520px); }
+#sceneTimeLabel { min-width:75px; color:#fff; font:12px Consolas,monospace; }
+.test-viewport { position:relative; overflow:auto; background:repeating-conic-gradient(#121923 0 25%,#0e141d 0 50%) 0/24px 24px; }
+#sceneMount { transform-origin:left top; }
+.test-report-panel { overflow:auto; padding:14px; border-left:1px solid #273142; background:#0d131b; }
+.test-report-panel h2 { margin:4px 0 8px; color:#9b88df; font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+#rendererReport { min-height:150px; margin:0 0 18px; padding:10px; overflow:auto; color:#b8c5d7; border:1px solid #253044; border-radius:8px; background:#080c12; font:11px/1.45 Consolas,monospace; }
+#sceneTree { margin:0; padding:0; list-style:none; font:11px/1.6 Consolas,monospace; }
+#sceneTree li { padding-left:calc(var(--depth) * 15px); white-space:nowrap; }
+#sceneTree li::before { content:"↳ "; color:#5d6d84; }
+#sceneTree .visible { color:#dce5f2; }
+#sceneTree .hidden { color:#536074; }
+#sceneTree .unsupported { color:#ff8b9a; }
