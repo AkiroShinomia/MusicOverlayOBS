@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Music Overlay</title>
+  <link rel="stylesheet" href="style.css?v=2.0.1" />
+</head>
+<body>
+  <div id="fullGroup" class="layout-group full-layout-group" data-layout-group="full-card-group">
+    <div id="fullOverlay" class="full-overlay hidden">
+      <div class="vinyl-wrap">
+        <div class="vinyl" data-layout-layer="full-vinyl"></div>
+        <div id="particleContainer" class="particle-container" data-layout-layer="full-particles"></div>
+        <img id="cover" class="cover" data-layout-layer="full-cover" src="/assets/default-cover.png" alt="cover" />
+      </div>
+      <div class="full-card" data-layout-layer="full-card-shell">
+        <div id="title" class="title marquee-box" data-layout-layer="full-title">
+          <span id="titleText">Название трека</span>
+        </div>
+        <div id="artist" class="artist marquee-box" data-layout-layer="full-artist">
+          <span id="artistText">Исполнитель</span>
+        </div>
+        <div class="time-row" data-layout-layer="full-time">
+          <span id="currentTime">00:00</span>
+          <span id="duration">00:00</span>
+        </div>
+        <div class="progress" data-layout-layer="full-progress">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tickerGroup" class="layout-group ticker-layout-group" data-layout-group="ticker-group">
+    <div id="tickerOverlay" class="ticker-overlay hidden">
+      <div id="equalizer" class="equalizer" data-layout-layer="ticker-equalizer"></div>
+      <div class="ticker-title marquee-box" data-layout-layer="ticker-title">
+        <span id="tickerTitleText">Название трека - Исполнитель</span>
+      </div>
+      <div class="ticker-time" data-layout-layer="ticker-time">
+        <span id="tickerCurrentTime">00:00</span>
+        <span>/</span>
+        <span id="tickerDuration">00:00</span>
+      </div>
+      <div class="ticker-progress" data-layout-layer="ticker-progress">
+        <div id="tickerProgressBar" class="ticker-progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dynamicLayoutRoot" class="dynamic-layout-root"></div>
+
+  <script src="app.js?v=2.0.1"></script>
+</body>
+</html>

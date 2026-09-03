@@ -1,0 +1,386 @@
+﻿{
+  "position": {
+    "left": 70,
+    "fullBottom": 80,
+    "tickerBottom": 44
+  },
+  "sizes": {
+    "fullCardWidth": 430,
+    "tickerWidth": 500,
+    "tickerHeight": 42,
+    "coverSize": 92,
+    "vinylSize": 108
+  },
+  "colors": {
+    "background": "rgba(92, 96, 108, 0.94)",
+    "text": "#ffffff",
+    "progress": "#74ff70",
+    "progressBackground": "rgba(255, 255, 255, 0.20)"
+  },
+  "timings": {
+    "fullVisibleMs": 10000,
+    "coverDelayMs": 500,
+    "cardDelayMs": 850,
+    "exitMs": 600,
+    "marqueeDelayMs": 2000,
+    "marqueeSpeedSec": 10
+  },
+  "animations": {
+    "fullEnter": "slideRight",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp",
+    "tickerExit": "none"
+  },
+  "albumArt": {
+    "useWindowsThumbnail": true,
+    "defaultCover": "/assets/default-cover.png"
+  },
+  "theme": {
+    "preset": "now-playing-rollout"
+  },
+  "font": {
+    "family": "Segoe UI",
+    "titleSize": 27,
+    "artistSize": 19,
+    "tickerSize": 16
+  },
+  "ticker": {
+    "style": "glass"
+  },
+  "fullCard": {
+    "style": "glass"
+  },
+  "vinyl": {
+    "style": "cd"
+  },
+  "particles": {
+    "enabled": false,
+    "style": "notes",
+    "count": 0,
+    "size": 12,
+    "durationMs": 1800,
+    "color": "#ffffff"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "minimal",
+    "barCount": 72,
+    "barWidth": 2,
+    "gap": 1,
+    "height": 34,
+    "offsetY": 0,
+    "sidePadding": 0,
+    "preset": "dynamicBars",
+    "sensitivity": 1.12,
+    "smoothing": 0.28,
+    "autoGain": true,
+    "outputGain": 1,
+    "spectralContrast": 1,
+    "visualCurvePower": 1,
+    "glow": false,
+    "glowPower": 0,
+    "colorMode": "custom",
+    "color": "#ffffff"
+  },
+  "audio": {
+    "sourceMode": "auto"
+  },
+  "layout": {
+    "version": 1,
+    "replaceDefaults": true,
+    "canvas": {
+      "width": 1920,
+      "height": 1080,
+      "backgroundColor": "#00a84f"
+    },
+    "compositionDurationMs": 30000,
+    "groups": [
+      {
+        "id": "rollout-card-group",
+        "name": "Now Playing Rollout",
+        "runtimeTarget": null,
+        "visible": true,
+        "locked": false,
+        "marker": "#74ff70",
+        "x": -550,
+        "y": -30,
+        "scale": 100,
+        "effects": {
+          "opacity": 100,
+          "blur": 0,
+          "glow": 0
+        },
+        "animation": {
+          "enter": "none",
+          "exit": "fade",
+          "enterDurationMs": 0,
+          "enterEasing": "linear",
+          "exitDurationMs": 450,
+          "exitEasing": "ease-in-out",
+          "durationMs": 0,
+          "easing": "linear"
+        },
+        "timing": {
+          "startMs": 0,
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": false
+        }
+      }
+    ],
+    "layers": [
+      {
+        "id": "rollout-cover",
+        "name": "Round cover",
+        "kind": "image",
+        "templateId": "cover-round",
+        "groupId": "rollout-card-group",
+        "marker": "#74ff70",
+        "timing": {
+          "startMs": 0,
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
+        },
+        "visible": true,
+        "locked": false,
+        "x": 1030,
+        "y": 440,
+        "scale": 100,
+        "effects": {
+          "opacity": 100,
+          "blur": 0,
+          "glow": 10
+        },
+        "animation": {
+          "enter": "rollRight",
+          "exit": "fade",
+          "enterDurationMs": 850,
+          "enterEasing": "ease-out",
+          "exitDurationMs": 350,
+          "exitEasing": "ease-in-out",
+          "durationMs": 850,
+          "easing": "ease-out"
+        },
+        "properties": {
+          "width": 140,
+          "height": 140,
+          "borderRadius": 70,
+          "source": "track",
+          "outline": 5,
+          "outlineColor": "#ffffff"
+        }
+      },
+      {
+        "id": "rollout-now-playing",
+        "name": "Now Playing",
+        "kind": "text",
+        "templateId": "now-playing-text",
+        "groupId": "rollout-card-group",
+        "marker": "#74ff70",
+        "timing": {
+          "startMs": 380,
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
+        },
+        "visible": true,
+        "locked": false,
+        "x": 680,
+        "y": 450,
+        "scale": 100,
+        "effects": {
+          "opacity": 100,
+          "blur": 0,
+          "glow": 0
+        },
+        "animation": {
+          "enter": "slideRight",
+          "exit": "fade",
+          "enterDurationMs": 560,
+          "enterEasing": "ease-out",
+          "exitDurationMs": 300,
+          "exitEasing": "ease-in-out",
+          "durationMs": 560,
+          "easing": "ease-out"
+        },
+        "properties": {
+          "binding": "custom",
+          "text": "Now Playing",
+          "width": 320,
+          "fontSize": 24,
+          "fontWeight": 850,
+          "color": "#ffffff",
+          "accentWord": "Playing",
+          "accentColor": "#74ff70"
+        }
+      },
+      {
+        "id": "rollout-title",
+        "name": "Track title",
+        "kind": "text",
+        "templateId": "track-title",
+        "groupId": "rollout-card-group",
+        "marker": "#ffffff",
+        "timing": {
+          "startMs": 480,
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
+        },
+        "visible": true,
+        "locked": false,
+        "x": 680,
+        "y": 490,
+        "scale": 100,
+        "effects": {
+          "opacity": 100,
+          "blur": 0,
+          "glow": 0
+        },
+        "animation": {
+          "enter": "slideRight",
+          "exit": "fade",
+          "enterDurationMs": 600,
+          "enterEasing": "ease-out",
+          "exitDurationMs": 300,
+          "exitEasing": "ease-in-out",
+          "durationMs": 600,
+          "easing": "ease-out"
+        },
+        "properties": {
+          "binding": "title",
+          "text": "Track title",
+          "width": 330,
+          "fontSize": 27,
+          "fontWeight": 800,
+          "color": "#ffffff"
+        }
+      },
+      {
+        "id": "rollout-artist",
+        "name": "Artist",
+        "kind": "text",
+        "templateId": "track-artist",
+        "groupId": "rollout-card-group",
+        "marker": "#dfe3eb",
+        "timing": {
+          "startMs": 560,
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
+        },
+        "visible": true,
+        "locked": false,
+        "x": 680,
+        "y": 526,
+        "scale": 100,
+        "effects": {
+          "opacity": 88,
+          "blur": 0,
+          "glow": 0
+        },
+        "animation": {
+          "enter": "slideRight",
+          "exit": "fade",
+          "enterDurationMs": 620,
+          "enterEasing": "ease-out",
+          "exitDurationMs": 300,
+          "exitEasing": "ease-in-out",
+          "durationMs": 620,
+          "easing": "ease-out"
+        },
+        "properties": {
+          "binding": "artist",
+          "text": "Artist",
+          "width": 330,
+          "fontSize": 19,
+          "fontWeight": 650,
+          "color": "#e3e6ed"
+        }
+      },
+      {
+        "id": "rollout-waveform",
+        "name": "Waveform equalizer",
+        "kind": "equalizer",
+        "templateId": "equalizer-waveform",
+        "groupId": "rollout-card-group",
+        "marker": "#ffffff",
+        "timing": {
+          "startMs": 650,
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
+        },
+        "visible": true,
+        "locked": false,
+        "x": 680,
+        "y": 556,
+        "scale": 100,
+        "effects": {
+          "opacity": 82,
+          "blur": 0,
+          "glow": 0
+        },
+        "animation": {
+          "enter": "slideRight",
+          "exit": "fade",
+          "enterDurationMs": 650,
+          "enterEasing": "ease-out",
+          "exitDurationMs": 300,
+          "exitEasing": "ease-in-out",
+          "durationMs": 650,
+          "easing": "ease-out"
+        },
+        "properties": {
+          "width": 300,
+          "height": 30,
+          "barCount": 72,
+          "gap": 1,
+          "style": "waveform",
+          "color": "#ffffff"
+        }
+      },
+      {
+        "id": "rollout-card-background",
+        "name": "Card background",
+        "kind": "block",
+        "templateId": "block-glass",
+        "groupId": "rollout-card-group",
+        "marker": "#707582",
+        "timing": {
+          "startMs": 250,
+          "endMs": 4500,
+          "untilNextTrack": false,
+          "untilGroupEnd": true
+        },
+        "visible": true,
+        "locked": false,
+        "x": 650,
+        "y": 430,
+        "scale": 100,
+        "effects": {
+          "opacity": 96,
+          "blur": 0,
+          "glow": 12
+        },
+        "animation": {
+          "enter": "slideRight",
+          "exit": "fade",
+          "enterDurationMs": 720,
+          "enterEasing": "ease-out",
+          "exitDurationMs": 400,
+          "exitEasing": "ease-in-out",
+          "durationMs": 720,
+          "easing": "ease-out"
+        },
+        "properties": {
+          "width": 450,
+          "height": 160,
+          "color": "#6f7380",
+          "borderRadius": 20
+        }
+      }
+    ]
+  }
+}

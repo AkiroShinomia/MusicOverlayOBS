@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+publish/
+
+*.exe
+*.rar
+*.zip
+work/
+Замеры.txt

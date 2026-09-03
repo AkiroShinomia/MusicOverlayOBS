@@ -1,14 +1,23 @@
 bin/
 obj/
-.vs/
 publish/
+.vs/
 
 *.exe
 *.exe.sha256
+*.dll
+*.pdb
+
+.vscode/
+.idea/
+
 *.rar
 *.zip
-work/
+
+# Runtime data
 data/
-/main/
-/backups/
+backups/
+work/
+
+# Local notes
 Замеры.txt

@@ -1,0 +1,63 @@
+{
+  "id": "frost",
+  "name": "Frost",
+  "colors": {
+    "background": "rgba(10, 24, 34, 0.72)",
+    "text": "#e8fbff",
+    "progress": "#7fd7ff",
+    "progressBackground": "rgba(127, 215, 255, 0.22)"
+  },
+  "font": {
+    "family": "Segoe UI",
+    "titleSize": 25,
+    "artistSize": 16,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "glass"
+  },
+  "fullCard": {
+    "style": "glass"
+  },
+  "vinyl": {
+    "style": "transparent"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "sparkles",
+    "count": 2,
+    "size": 17,
+    "durationMs": 2400,
+    "color": "#b9efff"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "soft",
+    "barCount": 60,
+    "barWidth": 5,
+    "gap": 3,
+    "height": 76,
+    "offsetY": 1,
+    "sidePadding": 10,
+    "glow": true,
+    "glowPower": 22,
+    "colorMode": "progress",
+    "color": "#7fd7ff",
+    "preset": "dynamicBars",
+    "sensitivity": 1.12,
+    "smoothing": 0.28,
+    "autoGain": true,
+    "outputGain": 1.0,
+    "spectralContrast": 1.0,
+    "visualCurvePower": 1.0
+  },
+  "audio": {
+    "sourceMode": "auto"
+  },
+  "animations": {
+    "fullEnter": "slideRight",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp",
+    "tickerExit": "none"
+  }
+}

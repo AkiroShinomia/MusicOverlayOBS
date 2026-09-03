@@ -1,0 +1,60 @@
+{
+  "id": "dark-glass",
+  "name": "Dark Glass",
+  "colors": {
+    "background": "rgba(10, 10, 14, 0.80)",
+    "text": "#ffffff",
+    "progress": "#ffffff",
+    "progressBackground": "rgba(255, 255, 255, 0.18)"
+  },
+  "font": {
+    "family": "Arial",
+    "titleSize": 25,
+    "artistSize": 16,
+    "tickerSize": 14
+  },
+  "ticker": {
+    "style": "pill"
+  },
+  "fullCard": {
+    "style": "glass"
+  },
+  "vinyl": {
+    "style": "classic"
+  },
+  "particles": {
+    "enabled": true,
+    "style": "notes",
+    "count": 2,
+    "size": 18,
+    "durationMs": 2200,
+    "color": "#ffffff"
+  },
+  "equalizer": {
+    "enabled": true,
+    "style": "solid",
+    "barCount": 64,
+    "barWidth": 5,
+    "gap": 3,
+    "height": 86,
+    "offsetY": 0,
+    "sidePadding": 14,
+    "glow": true,
+    "glowPower": 18,
+    "colorMode": "progress",
+    "color": "#ffffff",
+    "preset": "dynamicBars",
+    "sensitivity": 1.12,
+    "smoothing": 0.28,
+    "autoGain": true,
+    "outputGain": 1.0,
+    "spectralContrast": 1.0,
+    "visualCurvePower": 1.0
+  },
+  "animations": {
+    "fullEnter": "slideRight",
+    "fullExit": "slideDown",
+    "tickerEnter": "slideUp",
+    "tickerExit": "none"
+  }
+}
