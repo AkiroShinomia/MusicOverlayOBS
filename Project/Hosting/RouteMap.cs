@@ -21,6 +21,7 @@ public sealed class RouteMap(
         else if (path == "/api/audiolevel") await live.GetAudioLevelAsync(context);
         else if (path == "/api/themes") await themes.ListAsync(context);
         else if (path == "/api/scene/draft" && method == "GET") await scenes.GetDraftAsync(context);
+        else if (path == "/api/scene/draft" && method == "POST") await scenes.SaveDraftAsync(context);
         else if (path == "/api/scene/published" && method == "GET") await scenes.GetPublishedAsync(context);
         else if (path == "/api/settings" && method == "GET") await settings.GetAsync(context);
         else if (path == "/api/scene/publish" && method == "POST") await scenes.PublishAsync(context);

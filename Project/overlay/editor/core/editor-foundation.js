@@ -7,6 +7,7 @@ const SceneOrder = window.MusicOverlaySceneOrder;
 const SceneRendererApi = window.MusicOverlaySceneRenderer;
 const SceneEditorModel = window.MusicOverlaySceneEditorModel;
 const FftPresetApi = window.MusicOverlayFftPresets;
+const BUILTIN_IDS = window.MusicOverlay.editor.compat.builtinV2Rules.IDS;
 
 const I18N = {
   ru: {
@@ -166,33 +167,33 @@ function createDefaultLayout(config = baseConfig) {
     compositionDurationMs: 30000,
     groups: [
       {
-        id: "full-card-group", name: "Full Card", runtimeTarget: "full", visible: true, locked: false,
+        id: BUILTIN_IDS.fullGroup, name: "Full Card", runtimeTarget: "full", visible: true, locked: false,
         marker: "#8b5cf6", x: 0, y: 0, scale: 100, effects: makeEffects(),
         animation: makeGroupAnimation(config.animations?.fullEnter || "slideRight", config.animations?.fullExit || "slideDown", duration, false),
         timing: makeTiming(0, fullEnd, false)
       },
       {
-        id: "ticker-group", name: "Ticker / Until next track", runtimeTarget: "ticker", visible: true, locked: false,
+        id: BUILTIN_IDS.tickerGroup, name: "Ticker / Until next track", runtimeTarget: "ticker", visible: true, locked: false,
         marker: "#35d0ba", x: 0, y: 0, scale: 100, effects: makeEffects(),
         animation: makeGroupAnimation(config.animations?.tickerEnter || "slideUp", config.animations?.tickerExit || "none", duration, false),
         timing: makeTiming(fullEnd, null, true)
       }
     ],
     layers: [
-      { id: "full-particles", name: "Particles", kind: "effect", groupId: "full-card-group", marker: "#e879f9", timing: makeTiming(0, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
-      { id: "full-cover", name: "Cover", kind: "image", groupId: "full-card-group", marker: "#fb7185", timing: makeTiming(coverStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("scale", "fade", 450) },
-      { id: "full-vinyl", name: "Vinyl", kind: "disc", groupId: "full-card-group", marker: "#ff9f43", timing: makeTiming(coverStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideLeft", "fade", 500) },
-      { id: "full-title", name: "Title", kind: "text", groupId: "full-card-group", marker: "#4da3ff", timing: makeTiming(cardStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideLeft", "fade", 450) },
-      { id: "full-artist", name: "Artist", kind: "text", groupId: "full-card-group", marker: "#4da3ff", timing: makeTiming(cardStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideLeft", "fade", 450) },
-      { id: "full-time", name: "Time", kind: "data", groupId: "full-card-group", marker: "#35d0ba", timing: makeTiming(cardStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
-      { id: "full-progress", name: "Progress", kind: "data", groupId: "full-card-group", marker: "#35d0ba", timing: makeTiming(cardStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
-      { id: "full-card-shell", name: "Card container", kind: "container", groupId: "full-card-group", marker: "#8b5cf6", timing: makeTiming(cardStart, fullEnd), visible: true, locked: true, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
-      { id: "ticker-equalizer", name: "Equalizer", kind: "effect", groupId: "ticker-group", marker: "#e879f9", timing: makeTiming(fullEnd, null, true), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideUp", "fade", 500) },
-      { id: "ticker-title", name: "Ticker title", kind: "text", groupId: "ticker-group", marker: "#4da3ff", timing: makeTiming(fullEnd, null, true), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideUp", "fade", 500) },
-      { id: "ticker-time", name: "Ticker time", kind: "data", groupId: "ticker-group", marker: "#35d0ba", timing: makeTiming(fullEnd, null, true), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
-      { id: "ticker-progress", name: "Ticker progress", kind: "data", groupId: "ticker-group", marker: "#35d0ba", timing: makeTiming(fullEnd, null, true), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
+      { id: BUILTIN_IDS.fullParticles, name: "Particles", kind: "effect", groupId: BUILTIN_IDS.fullGroup, marker: "#e879f9", timing: makeTiming(0, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
+      { id: BUILTIN_IDS.fullCover, name: "Cover", kind: "image", groupId: BUILTIN_IDS.fullGroup, marker: "#fb7185", timing: makeTiming(coverStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("scale", "fade", 450) },
+      { id: BUILTIN_IDS.fullVinyl, name: "Vinyl", kind: "disc", groupId: BUILTIN_IDS.fullGroup, marker: "#ff9f43", timing: makeTiming(coverStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideLeft", "fade", 500) },
+      { id: BUILTIN_IDS.fullTitle, name: "Title", kind: "text", groupId: BUILTIN_IDS.fullGroup, marker: "#4da3ff", timing: makeTiming(cardStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideLeft", "fade", 450) },
+      { id: BUILTIN_IDS.fullArtist, name: "Artist", kind: "text", groupId: BUILTIN_IDS.fullGroup, marker: "#4da3ff", timing: makeTiming(cardStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideLeft", "fade", 450) },
+      { id: BUILTIN_IDS.fullTime, name: "Time", kind: "data", groupId: BUILTIN_IDS.fullGroup, marker: "#35d0ba", timing: makeTiming(cardStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
+      { id: BUILTIN_IDS.fullProgress, name: "Progress", kind: "data", groupId: BUILTIN_IDS.fullGroup, marker: "#35d0ba", timing: makeTiming(cardStart, fullEnd), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
+      { id: BUILTIN_IDS.fullShell, name: "Card container", kind: "container", groupId: BUILTIN_IDS.fullGroup, marker: "#8b5cf6", timing: makeTiming(cardStart, fullEnd), visible: true, locked: true, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
+      { id: BUILTIN_IDS.tickerEqualizer, name: "Equalizer", kind: "effect", groupId: BUILTIN_IDS.tickerGroup, marker: "#e879f9", timing: makeTiming(fullEnd, null, true), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideUp", "fade", 500) },
+      { id: BUILTIN_IDS.tickerTitle, name: "Ticker title", kind: "text", groupId: BUILTIN_IDS.tickerGroup, marker: "#4da3ff", timing: makeTiming(fullEnd, null, true), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("slideUp", "fade", 500) },
+      { id: BUILTIN_IDS.tickerTime, name: "Ticker time", kind: "data", groupId: BUILTIN_IDS.tickerGroup, marker: "#35d0ba", timing: makeTiming(fullEnd, null, true), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
+      { id: BUILTIN_IDS.tickerProgress, name: "Ticker progress", kind: "data", groupId: BUILTIN_IDS.tickerGroup, marker: "#35d0ba", timing: makeTiming(fullEnd, null, true), visible: true, locked: false, x: 0, y: 0, scale: 100, effects: makeEffects(), animation: makeAnimation("fade", "fade", 350) },
       {
-        id: "ticker-group-background", name: "Ticker background", kind: "block", templateId: "block-solid", groupId: "ticker-group",
+        id: BUILTIN_IDS.tickerBackground, name: "Ticker background", kind: "block", templateId: "block-solid", groupId: BUILTIN_IDS.tickerGroup,
         marker: "#8b5cf6", timing: makeTiming(fullEnd, null, true), visible: true, locked: false, x: 0, y: 0, scale: 100,
         effects: makeEffects(), animation: makeAnimation(config.animations?.tickerEnter || "slideUp", config.animations?.tickerExit || "none", duration),
         properties: {
@@ -233,7 +234,7 @@ const manualFftFields = new Set([
   "equalizerSpectralContrast", "equalizerVisualCurvePower"
 ]);
 
-MusicOverlay.compat.legacyEditorState.initialize(structuredClone(defaultConfig));
+
 MusicOverlay.compat.editorRuntime.previewTrackData = {
   title: "я не пойду с тобой гулять",
   artist: "Серега Пират",
@@ -274,7 +275,7 @@ function applyEditorLanguage() {
     if (value) element.textContent = value;
   });
   renderLibrary();
-  renderInspector();
+  if (MusicOverlay.editor.context?.isInitialized()) renderInspector();
   document.querySelectorAll("summary, .field > span, .compact-toggle > span, .composition-duration > span, .canvas-background-control > span, button, .eyebrow, h2, h3").forEach(element => {
     if (element.childElementCount > 0 || element.dataset.i18n) return;
     const source = element.dataset.i18nOriginal || element.textContent.trim();
@@ -293,7 +294,7 @@ function applyEditorLanguage() {
   });
   const zoomLabel = document.querySelector(".canvas-zoom-control");
   if (zoomLabel?.firstChild) zoomLabel.firstChild.nodeValue = `${MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "Масштаб" : "Zoom"} `;
-  renderTimeline();
+  if (MusicOverlay.editor.context?.isInitialized()) renderTimeline();
   if ($("wsStatus")) setWebSocketStatus($("wsStatus").classList.contains("is-online"));
 }
 
@@ -303,92 +304,26 @@ function setEditorLanguage(language) {
   applyEditorLanguage();
 }
 
-function createHistorySnapshot() {
-  return JSON.stringify({
-    config: MusicOverlay.compat.legacyEditorState.value,
-    selection: MusicOverlay.compat.editorRuntime.selection,
-    previewTimeMs: MusicOverlay.compat.editorRuntime.previewTimeMs
+/* Obsolete Stage 2F history helper removed.
+
+
+
+
   });
 }
 
-function updateHistoryControls() {
-  if (!$(`undoBtn`)) return;
-  $("undoBtn").disabled = MusicOverlay.compat.editorRuntime.undoStack.length < 2;
-  $("redoBtn").disabled = MusicOverlay.compat.editorRuntime.redoStack.length === 0;
-}
-
-function resetHistory() {
-  MusicOverlay.compat.editorRuntime.undoStack = [createHistorySnapshot()];
-  MusicOverlay.compat.editorRuntime.redoStack = [];
-  MusicOverlay.compat.editorRuntime.historyLastRecordedAt = 0;
-  updateHistoryControls();
-}
-
-function recordHistorySnapshot(force = false) {
-  if (MusicOverlay.compat.editorRuntime.historySuspended) return;
-  const snapshot = createHistorySnapshot();
-  if (!MusicOverlay.compat.editorRuntime.undoStack.length) {
-    MusicOverlay.compat.editorRuntime.undoStack.push(snapshot);
-    updateHistoryControls();
-    return;
-  }
-  if (MusicOverlay.compat.editorRuntime.undoStack.at(-1) === snapshot) return;
-  const now = performance.now();
-  if (!force && MusicOverlay.compat.editorRuntime.undoStack.length > 1 && now - MusicOverlay.compat.editorRuntime.historyLastRecordedAt < 350) MusicOverlay.compat.editorRuntime.undoStack[MusicOverlay.compat.editorRuntime.undoStack.length - 1] = snapshot;
-  else MusicOverlay.compat.editorRuntime.undoStack.push(snapshot);
-  if (MusicOverlay.compat.editorRuntime.undoStack.length > 100) MusicOverlay.compat.editorRuntime.undoStack.shift();
-  MusicOverlay.compat.editorRuntime.redoStack = [];
-  MusicOverlay.compat.editorRuntime.historyLastRecordedAt = now;
-  updateHistoryControls();
-}
-
-function applyHistorySnapshot(snapshot, message) {
-  MusicOverlay.compat.editorRuntime.historySuspended = true;
-  try {
-    const state = JSON.parse(snapshot);
-    MusicOverlay.compat.legacyEditorState.value = mergeConfig(defaultConfig, state.config || {});
-    MusicOverlay.compat.editorRuntime.previewTimeMs = clampNumber(state.previewTimeMs, 0, getCompositionDuration(), 0);
-    const candidate = state.selection || {};
-    const collection = candidate.type === "layer" ? MusicOverlay.compat.legacyEditorState.value.layout.layers : MusicOverlay.compat.legacyEditorState.value.layout.groups;
-    MusicOverlay.compat.editorRuntime.selection = collection.some(item => item.id === candidate.id)
-      ? candidate
-      : MusicOverlay.compat.legacyEditorState.value.layout.groups.length
-        ? { type: "group", id: MusicOverlay.compat.legacyEditorState.value.layout.groups[0].id }
-        : { type: "layer", id: MusicOverlay.compat.legacyEditorState.value.layout.layers[0]?.id || "" };
-    MusicOverlay.compat.editorRuntime.currentDefaultCover = MusicOverlay.compat.legacyEditorState.value.albumArt?.defaultCover || DEFAULT_COVER;
-    fillGlobalForm(MusicOverlay.compat.legacyEditorState.value);
-    MusicOverlay.compat.editorRuntime.themeDirty = true;
-    updateThemeControls();
-    updateEditor();
-    setStatus(message, "success");
-  } finally {
-    MusicOverlay.compat.editorRuntime.historySuspended = false;
-  }
-  updateHistoryControls();
-}
-
-function undoEditor() {
-  if (MusicOverlay.compat.editorRuntime.undoStack.length < 2) return;
-  MusicOverlay.compat.editorRuntime.redoStack.push(MusicOverlay.compat.editorRuntime.undoStack.pop());
-  applyHistorySnapshot(MusicOverlay.compat.editorRuntime.undoStack.at(-1), MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "Изменение отменено" : "Change undone");
-}
-
-function redoEditor() {
-  if (!MusicOverlay.compat.editorRuntime.redoStack.length) return;
-  const snapshot = MusicOverlay.compat.editorRuntime.redoStack.pop();
-  MusicOverlay.compat.editorRuntime.undoStack.push(snapshot);
-  applyHistorySnapshot(snapshot, MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "Изменение повторено" : "Change redone");
-}
-
+*/
 function loadCustomLibraryAssets() {
+  let customLibraryAssets = [];
   try {
     const parsed = JSON.parse(localStorage.getItem(LIBRARY_ASSETS_STORAGE_KEY) || "[]");
-    MusicOverlay.compat.editorRuntime.customLibraryAssets = Array.isArray(parsed) ? parsed.filter(asset => asset?.id && asset?.assetData) : [];
-  } catch { MusicOverlay.compat.editorRuntime.customLibraryAssets = []; }
+    customLibraryAssets = Array.isArray(parsed) ? parsed.filter(asset => asset?.id && asset?.assetData) : [];
+  } catch {}
+  MusicOverlay.editor.context.sessionStore.patch({ customLibraryAssets });
 }
 
 function saveCustomLibraryAssets() {
-  try { localStorage.setItem(LIBRARY_ASSETS_STORAGE_KEY, JSON.stringify(MusicOverlay.compat.editorRuntime.customLibraryAssets)); } catch {}
+  try { localStorage.setItem(LIBRARY_ASSETS_STORAGE_KEY, JSON.stringify(MusicOverlay.editor.state.uiAdapters.customLibraryAssets())); } catch {}
 }
 
 function getStoredCanvasBackground() {
@@ -534,11 +469,11 @@ function normalizeLayout(layout, config) {
   };
 }
 
-function getTimingEnd(item, duration = MusicOverlay.compat.editorRuntime.timelineDurationMs) {
+function getTimingEnd(item, duration = MusicOverlay.editor.state.uiAdapters.timelineDurationMs()) {
   return item?.timing?.untilNextTrack ? duration : Number(item?.timing?.endMs ?? item?.timing?.startMs + 1000);
 }
 
-function constrainGroupTiming(group, duration = MusicOverlay.compat.editorRuntime.timelineDurationMs) {
+function constrainGroupTiming(group, duration = MusicOverlay.editor.state.uiAdapters.timelineDurationMs()) {
   group.timing.startMs = clampNumber(group.timing.startMs, 0, Math.max(0, duration - 50), 0);
   if (group.timing.untilNextTrack) {
     group.timing.endMs = null;
@@ -547,7 +482,7 @@ function constrainGroupTiming(group, duration = MusicOverlay.compat.editorRuntim
   group.timing.endMs = clampNumber(group.timing.endMs, group.timing.startMs + 50, duration, Math.min(duration, group.timing.startMs + 1000));
 }
 
-function constrainLayerTiming(layer, groups = MusicOverlay.compat.legacyEditorState.value.layout?.groups || [], duration = MusicOverlay.compat.editorRuntime.timelineDurationMs) {
+function constrainLayerTiming(layer, groups = [], duration = MusicOverlay.editor.state.uiAdapters.timelineDurationMs()) {
   const group = groups.find(candidate => candidate.id === layer.groupId) || null;
   const minStart = group ? Number(group.timing.startMs || 0) : 0;
   const maxEnd = group ? getTimingEnd(group, duration) : duration;
@@ -573,9 +508,28 @@ function constrainLayerTiming(layer, groups = MusicOverlay.compat.legacyEditorSt
 }
 
 function constrainAllTimings() {
-  const duration = getCompositionDuration();
-  MusicOverlay.compat.legacyEditorState.value.layout.groups.forEach(group => constrainGroupTiming(group, duration));
-  MusicOverlay.compat.legacyEditorState.value.layout.layers.forEach(layer => constrainLayerTiming(layer, MusicOverlay.compat.legacyEditorState.value.layout.groups, duration));
+  const context = MusicOverlay.editor.context;
+  if (!context?.isInitialized()) return;
+  const scene = context.sceneStore.getSnapshot();
+  const duration = Number(scene.timeline?.durationMs || 30000);
+  const mutations = [];
+  scene.nodes.forEach(node => {
+    const window = context.selectors.effectiveTiming(scene, node.id);
+    if (!window || node.timing?.endMode !== "fixed") return;
+    const parentWindow = node.parentId ? context.selectors.effectiveTiming(scene, node.parentId) : null;
+    const parentStart = Number(parentWindow?.startMs || 0);
+    const parentEnd = Number.isFinite(Number(parentWindow?.endMs)) ? Number(parentWindow.endMs) : duration;
+    const start = Math.min(Math.max(parentStart, Number(window.startMs || 0)), Math.max(parentStart, parentEnd - 50));
+    const end = Math.min(Math.max(start + 50, Number(window.endMs || start + 1000)), parentEnd);
+    const localStart = Math.max(0, start - parentStart);
+    const nextDuration = Math.max(50, end - start);
+    if (Math.abs(localStart - Number(node.timing?.startMs || 0)) < .001 && Math.abs(nextDuration - Number(node.timing?.durationMs || 0)) < .001) return;
+    mutations.push({
+      type: "node.timing",
+      payload: { id: node.id, patch: { startMs: localStart, durationMs: nextDuration } }
+    });
+  });
+  if (mutations.length) context.commit({ type: "batch", payload: { mutations } });
 }
 
 function parseRgba(value) {
@@ -613,5 +567,47 @@ function fileToBase64(file) {
   });
 }
 
+
+function updateHistoryControls() {
+  if (!$("undoBtn") || !MusicOverlay.editor.context) return;
+  $("undoBtn").disabled = !MusicOverlay.editor.context.history.canUndo();
+  $("redoBtn").disabled = !MusicOverlay.editor.context.history.canRedo();
+}
+
+function resetHistory() {
+  if (!MusicOverlay.editor.context?.isInitialized()) return;
+  MusicOverlay.editor.context.history.reset();
+  updateHistoryControls();
+}
+
+function recordHistorySnapshot(force = false) {
+  if (!MusicOverlay.editor.context?.isInitialized()) return;
+  MusicOverlay.editor.context.history.record(force);
+  updateHistoryControls();
+}
+
+function syncUiAfterHistory(message) {
+  const scene = MusicOverlay.editor.context.sceneStore.getSnapshot();
+  if (!scene) return;
+  MusicOverlay.editor.context.sessionStore.ensureValidSelection(scene, MusicOverlay.editor.context.selectors);
+  const session = MusicOverlay.editor.context.sessionStore.getSnapshot();
+  MusicOverlay.editor.context.sessionStore.patch({
+    playheadMs: Math.min(session.playheadMs, Number(scene.timeline?.durationMs || 30000))
+  });
+  updateThemeControls();
+  updateEditor();
+  setStatus(message, "success");
+  updateHistoryControls();
+}
+
+function undoEditor() {
+  if (!MusicOverlay.editor.context?.undo()) return;
+  syncUiAfterHistory(MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "Изменение отменено" : "Change undone");
+}
+
+function redoEditor() {
+  if (!MusicOverlay.editor.context?.redo()) return;
+  syncUiAfterHistory(MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "Изменение повторено" : "Change redone");
+}
 
 MusicOverlay.core.editorFoundation = Object.freeze({ normalizeLayout, normalizeItem, constrainAllTimings, parseRgba, normalizeHex, rgbToHex, rgbaFromInputs, setEditorLanguage, applyEditorLanguage, recordHistorySnapshot, undoEditor, redoEditor });

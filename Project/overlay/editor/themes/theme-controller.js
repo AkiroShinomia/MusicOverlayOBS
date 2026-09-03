@@ -1,34 +1,51 @@
+function getThemeSession() {
+  return MusicOverlay.editor.context.sessionStore.getSnapshot().theme;
+}
+
+function patchThemeSession(patch) {
+  const session = MusicOverlay.editor.context.sessionStore.getSnapshot();
+  MusicOverlay.editor.context.sessionStore.patch({
+    theme: { ...session.theme, ...patch }
+  });
+}
+
 function markThemeDirty(forceHistory = false) {
-  MusicOverlay.compat.editorRuntime.themeDirty = true;
   const meta = getCurrentThemeMeta();
-  if (meta) {
-    MusicOverlay.compat.editorRuntime.activeThemeId = meta.id;
-    MusicOverlay.compat.editorRuntime.activeThemeType = meta.type;
-  }
+  const current = getThemeSession();
+  patchThemeSession({
+    activeId: meta?.id || current.activeId,
+    activeType: meta?.type || current.activeType,
+    dirty: true
+  });
+  const context = MusicOverlay.editor.context;
+  if (forceHistory && context?.isInitialized()) context.history.record(true);
   updateThemeControls();
-  recordHistorySnapshot(forceHistory);
 }
 
 function getCurrentThemeMeta() {
   const id = $("themePreset").value;
-  return id && id !== "Custom" ? MusicOverlay.compat.editorRuntime.availableThemes.find(theme => theme.id === id) || null : null;
+  return id && id !== "Custom"
+    ? getThemeSession().available.find(theme => theme.id === id) || null
+    : null;
 }
 
 function updateThemeControls() {
   const meta = getCurrentThemeMeta();
-  $("deleteThemeBtn").hidden = !meta || meta.type !== "custom" || meta.id !== MusicOverlay.compat.editorRuntime.activeThemeId;
+  $("deleteThemeBtn").hidden = !meta || meta.type !== "custom" || meta.id !== getThemeSession().activeId;
 }
 
 async function loadThemes() {
   const select = $("themePreset");
-  const selectedId = MusicOverlay.compat.editorRuntime.activeThemeId || select.value;
+  const selectedId = getThemeSession().activeId || select.value;
   select.innerHTML = '<option value="Custom">Custom</option>';
   try {
     const response = await MusicOverlay.api.themes.list();
+    if (!response.ok) throw new Error(`Themes API returned HTTP ${response.status}`);
     const rawThemes = await response.json();
+    if (!Array.isArray(rawThemes)) throw new Error("Themes API returned an invalid payload");
     const seenIds = new Set();
     const seenNames = new Set();
-    MusicOverlay.compat.editorRuntime.availableThemes = rawThemes.filter(theme => {
+    const available = rawThemes.filter(theme => {
       const id = String(theme.id || "").toLocaleLowerCase();
       const name = String(theme.name || theme.id || "").trim().toLocaleLowerCase();
       if (!id || seenIds.has(id) || seenNames.has(name)) return false;
@@ -36,7 +53,8 @@ async function loadThemes() {
       seenNames.add(name);
       return true;
     });
-    MusicOverlay.compat.editorRuntime.availableThemes.forEach(theme => {
+    patchThemeSession({ available });
+    available.forEach(theme => {
       const option = document.createElement("option");
       option.value = theme.id;
       option.textContent = theme.name || theme.id;
@@ -51,45 +69,80 @@ async function loadThemes() {
 
 async function getThemePreset(id) {
   if (!id || id === "Custom") return null;
-  if (MusicOverlay.compat.editorRuntime.loadedThemes[id]) return MusicOverlay.compat.editorRuntime.loadedThemes[id];
-  const meta = MusicOverlay.compat.editorRuntime.availableThemes.find(theme => theme.id === id);
+  const current = getThemeSession();
+  if (current.loaded[id]) return current.loaded[id];
+  const meta = current.available.find(theme => theme.id === id);
   if (!meta) return null;
   const response = await MusicOverlay.api.scenes.getTheme(meta.path);
+  if (!response.ok) throw new Error(`Theme '${id}' is unavailable`);
   const theme = await response.json();
-  MusicOverlay.compat.editorRuntime.loadedThemes[id] = theme;
+  patchThemeSession({ loaded: { ...getThemeSession().loaded, [id]: theme } });
   return theme;
+}
+
+function asWorkspaceScene(scene, sourceThemeId) {
+  const next = structuredClone(scene);
+  next.id = "workspace-draft";
+  next.metadata = {
+    ...(next.metadata || {}),
+    name: "Draft",
+    themeType: "workspace",
+    sourceThemeId
+  };
+  return next;
+}
+
+function syncLegacyProjection(scene) {
+  const settings = MusicOverlay.editor.context.getSettings();
+  const projection = MusicOverlay.editor.compat.legacyFormProjection.fromScene(scene, settings);
+  fillGlobalForm(projection);
+}
+
+function syncSelectionFromContext() {
+  MusicOverlay.editor.context.sessionStore.ensureValidSelection(
+    MusicOverlay.editor.context.sceneStore.getSnapshot(),
+    MusicOverlay.editor.context.selectors
+  );
 }
 
 async function applyThemePreset() {
   const presetId = $("themePreset").value;
-  const preset = await getThemePreset(presetId);
-  if (!preset) {
-    MusicOverlay.compat.editorRuntime.activeThemeId = null;
-    MusicOverlay.compat.editorRuntime.activeThemeType = null;
-    MusicOverlay.compat.editorRuntime.themeDirty = false;
-    MusicOverlay.compat.legacyEditorState.value.theme.preset = "Custom";
+  if (!presetId || presetId === "Custom") {
+    MusicOverlay.editor.compat.legacyFormProjection.setThemePreset("Custom");
+    patchThemeSession({ activeId: null, activeType: null, dirty: false });
     updateThemeControls();
     return;
   }
 
-  const meta = getCurrentThemeMeta();
-  const globalSettings = { audio: structuredClone(MusicOverlay.compat.legacyEditorState.value.audio || { sourceMode: "auto" }) };
-  MusicOverlay.compat.legacyEditorState.value = SceneEditorModel.fromScene(preset, globalSettings, defaultConfig);
-  MusicOverlay.compat.legacyEditorState.value.theme.preset = presetId;
-  MusicOverlay.compat.legacyEditorState.value.layout = normalizeLayout(MusicOverlay.compat.legacyEditorState.value.layout, MusicOverlay.compat.legacyEditorState.value);
-  const selectionCollection = MusicOverlay.compat.editorRuntime.selection.type === "group" ? MusicOverlay.compat.legacyEditorState.value.layout.groups : MusicOverlay.compat.legacyEditorState.value.layout.layers;
-  if (!selectionCollection.some(item => item.id === MusicOverlay.compat.editorRuntime.selection.id)) {
-    MusicOverlay.compat.editorRuntime.selection = MusicOverlay.compat.legacyEditorState.value.layout.groups.length
-      ? { type: "group", id: MusicOverlay.compat.legacyEditorState.value.layout.groups[0].id }
-      : { type: "layer", id: MusicOverlay.compat.legacyEditorState.value.layout.layers[0]?.id || "" };
+  try {
+    const preset = await getThemePreset(presetId);
+    if (!preset) return;
+    const meta = getCurrentThemeMeta();
+    const scene = asWorkspaceScene(preset, presetId);
+
+    MusicOverlay.editor.context.replaceScene(scene, { forceHistory: true, themeDirty: false });
+    MusicOverlay.editor.context.history.reset();
+    syncSelectionFromContext();
+    syncLegacyProjection(scene);
+
+    const currentSession = MusicOverlay.editor.context.sessionStore.getSnapshot();
+    MusicOverlay.editor.context.sessionStore.patch({
+      playheadMs: Math.min(currentSession.playheadMs, Number(scene.timeline?.durationMs || 30000))
+    });
+    MusicOverlay.compat.editorRuntime.currentDefaultCover = scene.appearance?.albumArt?.defaultCover || DEFAULT_COVER;
+    patchThemeSession({
+      activeId: meta?.id || presetId,
+      activeType: meta?.type || "builtin",
+      dirty: false
+    });
+
+    updateThemeControls();
+    updateEditor();
+    updateHistoryControls();
+  } catch (error) {
+    console.error(error);
+    setStatus(error.message || "Не удалось применить тему.", "error");
   }
-  MusicOverlay.compat.editorRuntime.activeThemeId = meta?.id || presetId;
-  MusicOverlay.compat.editorRuntime.activeThemeType = meta?.type || "builtin";
-  MusicOverlay.compat.editorRuntime.themeDirty = false;
-  fillGlobalForm(MusicOverlay.compat.legacyEditorState.value);
-  updateThemeControls();
-  updateEditor();
-  recordHistorySnapshot(true);
 }
 
 function applyFftPresetToForm(name) {
@@ -103,33 +156,34 @@ function applyFftPresetToForm(name) {
   $("equalizerAutoGain").checked = preset.autoGain;
 }
 
-function createThemePayload(config) {
-  return SceneEditorModel.toScene(config, {
-    id: `theme-${String(config.theme?.preset || "custom").replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}`,
-    name: config.theme?.preset || "Custom theme",
-    themeType: "custom",
-    sourceThemeId: config.theme?.preset || "Custom"
-  });
+function createThemePayload() {
+  return structuredClone(MusicOverlay.editor.context.sceneStore.getSnapshot());
+}
+
+function setActiveThemeAfterSave(id, type = "custom") {
+  patchThemeSession({ activeId: id, activeType: type, dirty: false });
+  MusicOverlay.editor.context.commit({
+    type: "scene.metadata",
+    payload: { patch: { sourceThemeId: id, themeType: "workspace" } }
+  }, { forceHistory: true, themeDirty: false });
 }
 
 async function saveCustomTheme() {
   const name = $("customThemeName").value.trim();
   if (!name) {
     setStatus("Введите название темы.", "error");
-    return;
+    return false;
   }
-  MusicOverlay.compat.legacyEditorState.value = readGlobalForm();
   try {
-    const response = await MusicOverlay.api.themes.create({ name, scene: createThemePayload(MusicOverlay.compat.legacyEditorState.value) });
+    const response = await MusicOverlay.api.themes.create({ name, scene: createThemePayload() });
     const result = await response.json();
-    if (!result.ok) throw new Error(result.error || "Не удалось сохранить тему.");
+    if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось сохранить тему.");
     $("customThemeName").value = "";
     await loadThemes();
     $("themePreset").value = result.id;
-    MusicOverlay.compat.editorRuntime.activeThemeId = result.id;
-    MusicOverlay.compat.editorRuntime.activeThemeType = "custom";
-    MusicOverlay.compat.editorRuntime.themeDirty = false;
+    setActiveThemeAfterSave(result.id, "custom");
     updateThemeControls();
+    updateHistoryControls();
     setStatus("Тема сохранена.", "success");
     return true;
   } catch (error) {
@@ -139,17 +193,18 @@ async function saveCustomTheme() {
 }
 
 async function updateCustomTheme() {
-  if (!MusicOverlay.compat.editorRuntime.activeThemeId || MusicOverlay.compat.editorRuntime.activeThemeType !== "custom") return;
-  MusicOverlay.compat.legacyEditorState.value = readGlobalForm();
+  const activeTheme = getThemeSession();
+  if (!activeTheme.activeId || activeTheme.activeType !== "custom") return false;
   try {
-    const themeId = MusicOverlay.compat.editorRuntime.activeThemeId.replace("custom/", "");
-    const response = await MusicOverlay.api.themes.update(themeId, { scene: createThemePayload(MusicOverlay.compat.legacyEditorState.value) });
+    const themeId = activeTheme.activeId.replace("custom/", "");
+    const response = await MusicOverlay.api.themes.update(themeId, { scene: createThemePayload() });
     const result = await response.json();
-    if (!result.ok) throw new Error(result.error || "Не удалось обновить тему.");
-    MusicOverlay.compat.editorRuntime.themeDirty = false;
+    if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось обновить тему.");
+    setActiveThemeAfterSave(activeTheme.activeId, "custom");
     await loadThemes();
-    $("themePreset").value = MusicOverlay.compat.editorRuntime.activeThemeId;
+    $("themePreset").value = activeTheme.activeId;
     updateThemeControls();
+    updateHistoryControls();
     setStatus("Пользовательская тема обновлена.", "success");
     return true;
   } catch (error) {
@@ -160,7 +215,7 @@ async function updateCustomTheme() {
 
 function refreshThemeSaveDialog() {
   const meta = getCurrentThemeMeta();
-  const canOverwrite = meta?.type === "custom" && meta.id === MusicOverlay.compat.editorRuntime.activeThemeId;
+  const canOverwrite = meta?.type === "custom" && meta.id === getThemeSession().activeId;
   const overwrite = $("themeSaveModeOverwrite");
   overwrite.disabled = !canOverwrite;
   $("themeOverwriteHint").textContent = canOverwrite
@@ -172,7 +227,7 @@ function refreshThemeSaveDialog() {
 
 function openThemeSaveDialog() {
   const meta = getCurrentThemeMeta();
-  const canOverwrite = meta?.type === "custom" && meta.id === MusicOverlay.compat.editorRuntime.activeThemeId;
+  const canOverwrite = meta?.type === "custom" && meta.id === getThemeSession().activeId;
   $(canOverwrite ? "themeSaveModeOverwrite" : "themeSaveModeNew").checked = true;
   refreshThemeSaveDialog();
   $("themeSaveDialog").showModal();
@@ -188,7 +243,7 @@ async function confirmThemeSave(event) {
 
 async function deleteSelectedTheme() {
   const meta = getCurrentThemeMeta();
-  if (!meta || meta.type !== "custom" || meta.id !== MusicOverlay.compat.editorRuntime.activeThemeId) return;
+  if (!meta || meta.type !== "custom" || meta.id !== getThemeSession().activeId) return;
   const question = MusicOverlay.compat.editorRuntime.currentLanguage === "ru"
     ? `Удалить тему «${meta.name || meta.id}»? Файл темы будет удалён.`
     : `Delete theme “${meta.name || meta.id}”? The theme file will be removed.`;
@@ -196,19 +251,30 @@ async function deleteSelectedTheme() {
   try {
     const response = await MusicOverlay.api.themes.remove(meta.id.replace("custom/", ""));
     const result = await response.json();
-    if (!result.ok) throw new Error(result.error || "Не удалось удалить тему.");
-    delete MusicOverlay.compat.editorRuntime.loadedThemes[meta.id];
-    MusicOverlay.compat.editorRuntime.activeThemeId = null;
-    MusicOverlay.compat.editorRuntime.activeThemeType = null;
-    MusicOverlay.compat.editorRuntime.themeDirty = true;
+    if (!response.ok || !result.ok) throw new Error(result.error || "Не удалось удалить тему.");
+    const currentTheme = getThemeSession();
+    const loaded = { ...currentTheme.loaded };
+    delete loaded[meta.id];
+    patchThemeSession({ loaded, activeId: null, activeType: null, dirty: true });
     await loadThemes();
     $("themePreset").value = "Custom";
     updateThemeControls();
-    setStatus(MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "Тема удалена. Композиция осталась в редакторе." : "Theme deleted. The composition stays in the editor.", "success");
+    setStatus(
+      MusicOverlay.compat.editorRuntime.currentLanguage === "ru"
+        ? "Тема удалена. Композиция осталась в редакторе."
+        : "Theme deleted. The composition stays in the editor.",
+      "success"
+    );
   } catch (error) {
     setStatus(error.message || "Не удалось удалить тему.", "error");
   }
 }
 
-
-MusicOverlay.editor.themes = Object.freeze({ load: loadThemes, applySelected: applyThemePreset, saveCustom: saveCustomTheme, updateCustom: updateCustomTheme, deleteSelected: deleteSelectedTheme, markDirty: markThemeDirty });
+MusicOverlay.editor.themes = Object.freeze({
+  load: loadThemes,
+  applySelected: applyThemePreset,
+  saveCustom: saveCustomTheme,
+  updateCustom: updateCustomTheme,
+  deleteSelected: deleteSelectedTheme,
+  markDirty: markThemeDirty
+});

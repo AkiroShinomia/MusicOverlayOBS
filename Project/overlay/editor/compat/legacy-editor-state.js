@@ -37,12 +37,6 @@
     get revision() { return revision; }
   };
 
-  // Temporary Stage 2E bridge for mechanically extracted legacy controllers.
-  // Stage 2F removes this property after controllers move to canonical Scene commands.
-  Object.defineProperty(api, "value", {
-    get() { return currentConfig; },
-    set(snapshot) { api.replace(snapshot, "legacy-assignment"); }
-  });
 
   root.compat.legacyEditorState = Object.freeze(api);
 })(window.MusicOverlay);

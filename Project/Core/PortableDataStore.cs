@@ -92,6 +92,40 @@ public sealed class PortableDataStore : ISceneStore, ISettingsStore, IThemeStore
         await AtomicJsonFile.ReadObjectAsync(Paths.SettingsFile)
         ?? SceneDocumentConverter.CreateGlobalSettings();
 
+    public async Task<long> SaveDraftSceneAsync(JsonObject sceneInput, JsonObject? settingsPatch)
+    {
+        await writeGate.WaitAsync();
+        try
+        {
+            JsonObject scene = SceneDocumentConverter.NormalizeSceneV2(sceneInput);
+            JsonObject? previousDraft = await AtomicJsonFile.ReadObjectAsync(Paths.DraftSceneFile);
+            long revision = Math.Max(0, previousDraft?["revision"]?.GetValue<long>() ?? 0) + 1;
+            scene["id"] = "workspace-draft";
+            scene["revision"] = revision;
+            JsonObject metadata = scene["metadata"] as JsonObject ?? new JsonObject();
+            metadata["name"] = "Draft";
+            metadata["themeType"] = "workspace";
+            scene["metadata"] = metadata;
+
+            JsonObject settings = await GetGlobalSettingsAsync();
+            if (settingsPatch?["audio"]?["sourceMode"] is JsonValue sourceValue)
+            {
+                string sourceMode = sourceValue.GetValue<string>();
+                if (sourceMode is not ("auto" or "process" or "system"))
+                    throw new InvalidDataException("Unsupported audio source mode.");
+                settings["audio"] = new JsonObject { ["sourceMode"] = sourceMode };
+            }
+
+            await AtomicJsonFile.WriteAsync(Paths.SettingsFile, settings, Paths.BackupsRoot, "settings");
+            await AtomicJsonFile.WriteAsync(Paths.DraftSceneFile, scene, Paths.BackupsRoot, "draft-scene");
+            return revision;
+        }
+        finally
+        {
+            writeGate.Release();
+        }
+    }
+
     public async Task<long> SaveDraftAndPublishSceneAsync(JsonObject sceneInput, JsonObject? settingsPatch)
     {
         await writeGate.WaitAsync();

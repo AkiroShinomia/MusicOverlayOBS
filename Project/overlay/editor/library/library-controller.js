@@ -1,7 +1,7 @@
 function getLibraryCategories() {
   return LIBRARY_CATEGORIES.map(category => ({
     ...category,
-    items: category.id === "artwork" ? [...category.items, ...MusicOverlay.compat.editorRuntime.customLibraryAssets] : [...category.items]
+    items: category.id === "artwork" ? [...category.items, ...MusicOverlay.editor.state.uiAdapters.customLibraryAssets()] : [...category.items]
   }));
 }
 
@@ -83,14 +83,14 @@ function getDropTime(event, row = null) {
   const track = row?.querySelector(".track-cell") || $("timelineRuler").querySelector(".ruler-track");
   if (!track) return 0;
   const rect = track.getBoundingClientRect();
-  return clampNumber((event.clientX - rect.left) / Math.max(1, rect.width) * MusicOverlay.compat.editorRuntime.timelineDurationMs, 0, MusicOverlay.compat.editorRuntime.timelineDurationMs, 0);
+  return clampNumber((event.clientX - rect.left) / Math.max(1, rect.width) * MusicOverlay.editor.state.uiAdapters.timelineDurationMs(), 0, MusicOverlay.editor.state.uiAdapters.timelineDurationMs(), 0);
 }
 
 function getDropTimeFromPoint(clientX, row = null) {
   const track = row?.querySelector(".track-cell") || $("timelineRuler").querySelector(".ruler-track");
   if (!track) return 0;
   const rect = track.getBoundingClientRect();
-  return clampNumber((clientX - rect.left) / Math.max(1, rect.width) * MusicOverlay.compat.editorRuntime.timelineDurationMs, 0, MusicOverlay.compat.editorRuntime.timelineDurationMs, 0);
+  return clampNumber((clientX - rect.left) / Math.max(1, rect.width) * MusicOverlay.editor.state.uiAdapters.timelineDurationMs(), 0, MusicOverlay.editor.state.uiAdapters.timelineDurationMs(), 0);
 }
 
 function setupPointerLibraryDrag(card, libraryItem) {
@@ -185,9 +185,9 @@ function dropLibraryItemAt(libraryItem, clientX, clientY, preferredRow = null) {
   const target = document.elementFromPoint(clientX, clientY);
   const row = preferredRow || target?.closest(".timeline-row") || null;
   const targetType = row?.dataset.itemType;
-  const targetItem = targetType === "group"
-    ? getGroup(row.dataset.itemId)
-    : MusicOverlay.compat.legacyEditorState.value.layout.layers.find(layer => layer.id === row?.dataset.itemId) || null;
+  const targetItem = row?.dataset.itemId
+    ? MusicOverlay.editor.state.uiAdapters.get(row.dataset.itemId)
+    : null;
   const groupId = targetType === "group" ? targetItem?.id : targetItem?.groupId || null;
   if (row || target?.closest(".timeline-scroll")) {
     applyLibraryItemDrop(libraryItem, groupId, targetItem, getDropTimeFromPoint(clientX, row));
@@ -209,7 +209,7 @@ function setupLibraryDropOnTimelineRow(row, item, type) {
     event.preventDefault();
     event.stopPropagation();
     row.classList.remove("is-drop-target");
-    const groupId = type === "group" ? item.id : item.groupId;
+    const groupId = type === "group" ? item.id : item.groupId || item.parentId || null;
     handleLibraryDrop(event, groupId, item);
   });
 }
@@ -249,8 +249,13 @@ function applyLibraryItemDrop(libraryItem, groupId, targetItem, requestedStart) 
     setStatus(MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "Анимацию или эффект нужно бросить на объект или группу." : "Drop animations and effects on an object or group.", "error");
     return;
   }
+
+  const context = MusicOverlay.editor.context;
+  const node = context.selectors.nodeById(context.sceneStore.getSnapshot(), targetItem.id);
+  if (!node) return;
+  const targetType = node.nodeType === "group" ? "group" : "layer";
+
   if (libraryItem.payloadType.startsWith("animation")) {
-    const targetType = MusicOverlay.compat.legacyEditorState.value.layout.groups.includes(targetItem) ? "group" : "layer";
     const inheritedFrom = getAnimationOverrideGroup(targetItem, targetType);
     if (inheritedFrom) {
       setStatus(MusicOverlay.compat.editorRuntime.currentLanguage === "ru"
@@ -258,55 +263,117 @@ function applyLibraryItemDrop(libraryItem, groupId, targetItem, requestedStart) 
         : `Animation is controlled by “${inheritedFrom.name}”.`, "error");
       return;
     }
-    if (targetType === "group" && targetItem.animation?.overrideChildren !== true) {
+    if (targetType === "group" && node.animations?.overrideChildren !== true) {
       setStatus(MusicOverlay.compat.editorRuntime.currentLanguage === "ru"
         ? "Сначала включите «Затирать анимации объектов» в настройках группы."
         : "Enable “Override child animations” on the group first.", "error");
       return;
     }
   }
+
   if (libraryItem.payloadType === "animation-in") {
-    targetItem.animation.enter = libraryItem.value;
+    context.commit({
+      type: "node.animations",
+      payload: {
+        id: node.id,
+        patch: { in: { ...(node.animations?.in || {}), type: libraryItem.value } }
+      }
+    }, { forceHistory: true });
   } else if (libraryItem.payloadType === "animation-out") {
-    targetItem.animation.exit = libraryItem.value;
+    context.commit({
+      type: "node.animations",
+      payload: {
+        id: node.id,
+        patch: { out: { ...(node.animations?.out || {}), type: libraryItem.value } }
+      }
+    }, { forceHistory: true });
   } else if (libraryItem.payloadType === "effect") {
-    Object.assign(targetItem.effects, libraryItem.value || {});
+    const current = MusicOverlay.editor.state.uiAdapters.effectsObject(node);
+    const next = { ...current, ...(libraryItem.value || {}) };
+    context.commit({
+      type: "node.effects",
+      payload: {
+        id: node.id,
+        effects: [
+          { type: "opacity", enabled: true, value: Number(next.opacity ?? 100) },
+          { type: "blur", enabled: Number(next.blur || 0) > 0, value: Number(next.blur || 0) },
+          { type: "glow", enabled: Number(next.glow || 0) > 0, value: Number(next.glow || 0) }
+        ]
+      }
+    }, { forceHistory: true });
   }
-  MusicOverlay.compat.editorRuntime.selection = { type: MusicOverlay.compat.legacyEditorState.value.layout.groups.includes(targetItem) ? "group" : "layer", id: targetItem.id };
-  markThemeDirty();
-  updateEditor();
-  setStatus(`${localized(libraryItem.name)} → ${targetItem.name}`, "success");
+
+  selectItem(targetType, node.id);
+  updateHistoryControls();
+  setStatus(`${localized(libraryItem.name)} → ${node.name}`, "success");
 }
 
 function addLibraryObject(template, groupId, requestedStart) {
-  const group = getGroup(groupId);
-  const boundaryStart = Number(group?.timing?.startMs || 0);
-  const boundaryEnd = group ? getTimingEnd(group) : getCompositionDuration();
-  const startMs = clampNumber(Math.round(requestedStart / 50) * 50, boundaryStart, Math.max(boundaryStart, boundaryEnd - 50), boundaryStart);
-  const endMs = Math.min(boundaryEnd, startMs + 5000);
+  const context = MusicOverlay.editor.context;
+  const scene = context.sceneStore.getSnapshot();
+  const group = groupId ? context.selectors.nodeById(scene, groupId) : null;
+  const groupTiming = group ? context.selectors.effectiveTiming(scene, group.id) : null;
+  const boundaryStart = Number(groupTiming?.startMs || 0);
+  const boundaryEnd = Number.isFinite(Number(groupTiming?.endMs))
+    ? Number(groupTiming.endMs)
+    : Number(scene.timeline?.durationMs || 30000);
+  const absoluteStart = clampNumber(
+    Math.round(requestedStart / 50) * 50,
+    boundaryStart,
+    Math.max(boundaryStart, boundaryEnd - 50),
+    boundaryStart
+  );
+  const absoluteEnd = Math.min(boundaryEnd, absoluteStart + 5000);
   const id = `lib-${template.id}-${Date.now().toString(36)}`;
-  const layer = normalizeItem(null, {
+  const componentCount = scene.nodes.filter(node => node.nodeType !== "group").length;
+  const properties = structuredClone(template.properties || {});
+  if (template.assetData) properties.assetData = template.assetData;
+
+  const node = {
     id,
+    nodeType: "component",
     name: localized(template.name),
-    templateId: template.id,
-    kind: template.kind,
-    groupId: group?.id || null,
-    marker: markerPalette[MusicOverlay.compat.legacyEditorState.value.layout.layers.length % markerPalette.length],
-    timing: { ...makeTiming(startMs, Math.max(startMs + 50, endMs)), untilGroupEnd: false },
-    visible: true, locked: false,
-    x: 720 + (MusicOverlay.compat.legacyEditorState.value.layout.layers.length % 6) * 24,
-    y: 410 + (MusicOverlay.compat.legacyEditorState.value.layout.layers.length % 5) * 24,
-    scale: 100,
-    effects: makeEffects(),
-    animation: makeAnimation("fade", "fade", 500),
-    properties: structuredClone(template.properties || {}),
-    assetData: template.assetData || null
+    parentId: group?.id || null,
+    order: 0,
+    visible: true,
+    locked: false,
+    marker: markerPalette[componentCount % markerPalette.length],
+    transform: {
+      x: 720 + (componentCount % 6) * 24,
+      y: 410 + (componentCount % 5) * 24,
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      anchorX: .5,
+      anchorY: .5
+    },
+    timing: {
+      startMs: Math.max(0, absoluteStart - boundaryStart),
+      endMode: "fixed",
+      durationMs: Math.max(50, absoluteEnd - absoluteStart)
+    },
+    effects: [
+      { type: "opacity", enabled: true, value: 100 },
+      { type: "blur", enabled: false, value: 0 },
+      { type: "glow", enabled: false, value: 0 }
+    ],
+    animations: {
+      in: { type: "fade", durationMs: 500, easing: "ease-out" },
+      out: { type: "fade", durationMs: 500, easing: "ease-out" }
+    },
+    component: {
+      kind: template.kind || "unknown",
+      templateId: template.id,
+      properties
+    }
+  };
+
+  context.commit({ type: "node.add", payload: { node } }, { forceHistory: true });
+  context.sessionStore.patch({
+    playheadMs: Math.min(Number(scene.timeline?.durationMs || 30000), absoluteStart + 100)
   });
-  MusicOverlay.compat.legacyEditorState.value.layout.layers.unshift(layer);
-  constrainLayerTiming(layer);
-  MusicOverlay.compat.editorRuntime.previewTimeMs = Math.min(getCompositionDuration(), layer.timing.startMs + 100);
-  markThemeDirty();
-  selectItem("layer", layer.id);
+  selectItem("layer", id);
+  updateHistoryControls();
   setStatus(`${localized(template.name)} ${MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "добавлен" : "added"}`, "success");
 }
 
@@ -324,7 +391,9 @@ async function uploadLibraryObject(event) {
     properties: { width: 160, height: 160, borderRadius: 12, source: "asset" },
     assetData
   };
-  MusicOverlay.compat.editorRuntime.customLibraryAssets.push(asset);
+  const customLibraryAssets = MusicOverlay.editor.state.uiAdapters.customLibraryAssets();
+  customLibraryAssets.push(asset);
+  MusicOverlay.editor.context.sessionStore.patch({ customLibraryAssets });
   saveCustomLibraryAssets();
   renderLibrary();
   const category = document.querySelector('[data-category-id="artwork"]');

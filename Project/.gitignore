@@ -1,0 +1,55 @@
+# .NET build artifacts
+bin/
+obj/
+publish/
+artifacts/
+
+**/bin/
+**/obj/
+
+*.exe
+*.dll
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+*.exe.sha256
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Runtime application data
+# Bundled scenes/themes live under overlay/ and ARE source files.
+data/
+
+# User-created themes/assets
+overlay/themes/custom/
+**/overlay/themes/custom/
+
+# Logs / temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.cache
+*.rar
+*.zip
+
+logs/
+temp/
+tmp/
+work/
+
+# Local project notes / measurements
+Замеры.txt
+
+# OS garbage
+.DS_Store
+Thumbs.db
+desktop.ini

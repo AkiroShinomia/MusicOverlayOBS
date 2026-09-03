@@ -38,7 +38,7 @@ function fillGlobalForm(config) {
 }
 
 function readGlobalForm() {
-  const config = structuredClone(MusicOverlay.compat.legacyEditorState.value);
+  const config = MusicOverlay.editor.compat.legacyFormProjection.getSnapshot();
   config.theme.preset = $("themePreset").value || "Custom";
 
   fieldMappings.forEach(([id, path]) => {
@@ -62,20 +62,28 @@ function readGlobalForm() {
   config.equalizer.spectralContrast = Number($("equalizerSpectralContrast").value) / 100;
   config.equalizer.visualCurvePower = Number($("equalizerVisualCurvePower").value) / 100;
   config.albumArt.defaultCover = MusicOverlay.compat.editorRuntime.currentDefaultCover;
-  config.layout = normalizeLayout(MusicOverlay.compat.legacyEditorState.value.layout, config);
+  config.layout = normalizeLayout(config.layout, config);
   return config;
 }
 
+function getSceneGroups() {
+  return MusicOverlay.editor.state.uiAdapters.groups();
+}
+
+function getSceneLayers() {
+  return MusicOverlay.editor.state.uiAdapters.layers();
+}
+
 function getSelectedItem() {
-  const collection = MusicOverlay.compat.editorRuntime.selection.type === "group" ? MusicOverlay.compat.legacyEditorState.value.layout.groups : MusicOverlay.compat.legacyEditorState.value.layout.layers;
-  return collection.find(item => item.id === MusicOverlay.compat.editorRuntime.selection.id) || null;
+  return MusicOverlay.editor.state.uiAdapters.get(MusicOverlay.editor.state.uiAdapters.selection().id);
 }
 
 function getGroup(id) {
-  return MusicOverlay.compat.legacyEditorState.value.layout.groups.find(group => group.id === id) || null;
+  const item = MusicOverlay.editor.state.uiAdapters.get(id);
+  return item?.__sceneNode?.nodeType === "group" ? item : null;
 }
 
-function getAnimationOverrideGroup(item, itemType = MusicOverlay.compat.editorRuntime.selection.type) {
+function getAnimationOverrideGroup(item, itemType = MusicOverlay.editor.state.uiAdapters.selection().type) {
   let parentId = itemType === "group" ? item?.parentId : item?.groupId;
   const visited = new Set();
   while (parentId && !visited.has(parentId)) {
@@ -91,7 +99,7 @@ function getAnimationOverrideGroup(item, itemType = MusicOverlay.compat.editorRu
 function auditionAnimation(item, direction) {
   const inheritedFrom = getAnimationOverrideGroup(item);
   const owner = inheritedFrom || item;
-  if (owner === item && MusicOverlay.compat.editorRuntime.selection.type === "group" && item.animation?.overrideChildren !== true) return;
+  if (owner === item && MusicOverlay.editor.state.uiAdapters.selection().type === "group" && item.animation?.overrideChildren !== true) return;
   const animation = owner.animation || makeAnimation();
   const duration = direction === "out"
     ? Number(animation.exitDurationMs || animation.durationMs || 600)
@@ -123,7 +131,7 @@ function renderContextualSettings(item) {
 
 function renderDynamicObjectSettings(item) {
   const panel = $("dynamicObjectSettings");
-  const isDynamic = MusicOverlay.compat.editorRuntime.selection.type === "layer" && Boolean(item.templateId);
+  const isDynamic = MusicOverlay.editor.state.uiAdapters.selection().type === "layer" && Boolean(item.templateId);
   panel.classList.toggle("is-applicable", isDynamic);
   if (!isDynamic) {
     panel.innerHTML = "";
@@ -140,7 +148,7 @@ function renderDynamicObjectSettings(item) {
   if (item.kind === "equalizer") {
     props.style ??= "bars";
     props.gap ??= 3;
-    props.fftPreset ??= MusicOverlay.compat.legacyEditorState.value.equalizer?.preset || "balanced";
+    props.fftPreset ??= MusicOverlay.editor.context.sceneStore.getSnapshot().appearance?.equalizer?.preset || "balanced";
   }
   if (item.kind === "image") {
     props.outline ??= 0;
@@ -194,9 +202,10 @@ function renderDynamicObjectSettings(item) {
 }
 
 function selectItem(type, id) {
-  const collection = type === "group" ? MusicOverlay.compat.legacyEditorState.value.layout.groups : MusicOverlay.compat.legacyEditorState.value.layout.layers;
-  if (!collection.some(item => item.id === id)) return;
-  MusicOverlay.compat.editorRuntime.selection = { type, id };
+  const item = MusicOverlay.editor.state.uiAdapters.get(id);
+  if (!item) return;
+  const actualType = item.__sceneNode?.nodeType === "group" ? "group" : "layer";
+  MusicOverlay.editor.context.sessionStore.setSelection({ type: item.__sceneNode?.nodeType || "component", id });
   activateSidebarPane("inspector");
   renderInspector();
   renderTimeline();
@@ -207,7 +216,7 @@ function renderInspector() {
   const item = getSelectedItem();
   if (!item) return;
 
-  $("inspectorType").textContent = MusicOverlay.compat.editorRuntime.selection.type === "group"
+  $("inspectorType").textContent = MusicOverlay.editor.state.uiAdapters.selection().type === "group"
     ? (MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "ГРУППА" : "GROUP")
     : (MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "ОБЪЕКТ" : "OBJECT");
   $("inspectorName").value = item.name || item.id;
@@ -217,9 +226,9 @@ function renderInspector() {
   $("inspectorX").value = item.x || 0;
   $("inspectorY").value = item.y || 0;
   $("inspectorScale").value = item.scale || 100;
-  const parentGroup = MusicOverlay.compat.editorRuntime.selection.type === "layer" ? getGroup(item.groupId) : null;
+  const parentGroup = MusicOverlay.editor.state.uiAdapters.selection().type === "layer" ? getGroup(item.groupId) : null;
   const groupStart = Number(parentGroup?.timing?.startMs || 0);
-  const localTiming = MusicOverlay.compat.editorRuntime.selection.type === "layer" && parentGroup;
+  const localTiming = MusicOverlay.editor.state.uiAdapters.selection().type === "layer" && parentGroup;
   const finiteParent = localTiming && !parentGroup.timing.untilNextTrack;
   const displayStart = localTiming ? Number(item.timing?.startMs || 0) - groupStart : Number(item.timing?.startMs || 0);
   const displayEnd = localTiming && item.timing?.endMs !== null ? Number(item.timing.endMs) - groupStart : item.timing?.endMs;
@@ -247,7 +256,7 @@ function renderInspector() {
   $("inspectorOpacity").value = item.effects?.opacity ?? 100;
   $("inspectorBlur").value = item.effects?.blur ?? 0;
   $("inspectorGlow").value = item.effects?.glow ?? 0;
-  const isGroup = MusicOverlay.compat.editorRuntime.selection.type === "group";
+  const isGroup = MusicOverlay.editor.state.uiAdapters.selection().type === "group";
   const inheritedAnimationGroup = getAnimationOverrideGroup(item);
   const displayedAnimation = inheritedAnimationGroup?.animation || item.animation || makeAnimation();
   const groupOverridesChildren = isGroup && item.animation?.overrideChildren === true;
@@ -274,224 +283,144 @@ function renderInspector() {
 
   const groupField = $("inspectorGroupField");
   const groupSelect = $("inspectorGroup");
-  groupField.hidden = MusicOverlay.compat.editorRuntime.selection.type !== "layer";
+  groupField.hidden = MusicOverlay.editor.state.uiAdapters.selection().type !== "layer";
   groupSelect.innerHTML = `<option value="">${MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "Без группы" : "No group"}</option>`;
-  MusicOverlay.compat.legacyEditorState.value.layout.groups.forEach(group => {
+  const scene = MusicOverlay.editor.context.sceneStore.getSnapshot();
+  scene.nodes.filter(node => node.nodeType === "group").forEach(group => {
     const option = document.createElement("option");
     option.value = group.id;
     option.textContent = group.name;
     groupSelect.appendChild(option);
   });
-  if (MusicOverlay.compat.editorRuntime.selection.type === "layer") groupSelect.value = item.groupId || "";
+  if (MusicOverlay.editor.state.uiAdapters.selection().type === "layer") groupSelect.value = item.groupId || "";
 
-  const group = MusicOverlay.compat.editorRuntime.selection.type === "layer" ? getGroup(item.groupId) : item;
-  $("transformHint").textContent = MusicOverlay.compat.editorRuntime.selection.type === "layer" && group
+  const group = MusicOverlay.editor.state.uiAdapters.selection().type === "layer" ? getGroup(item.groupId) : item;
+  $("transformHint").textContent = MusicOverlay.editor.state.uiAdapters.selection().type === "layer" && group
     ? (MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? `Перетаскивание двигает объект «${item.name}». Выберите группу на таймлайне для общего изменения.` : `Drag moves “${item.name}”. Select its group on the Timeline for a shared transform.`)
     : (MusicOverlay.compat.editorRuntime.currentLanguage === "ru" ? "Перетаскивайте выбранную группу на холсте или задайте точные координаты." : "Drag the selected group on the Canvas or enter exact coordinates.");
 
-  $("deleteGroupBtn").disabled = MusicOverlay.compat.editorRuntime.selection.type !== "group";
+  $("deleteGroupBtn").disabled = MusicOverlay.editor.state.uiAdapters.selection().type !== "group";
 }
 
 function updateSelectedFromInspector(event) {
-  const item = getSelectedItem();
-  if (!item) return;
+  const context = MusicOverlay.editor.context;
+  const scene = context.sceneStore.getSnapshot();
+  const selectedId = MusicOverlay.editor.state.uiAdapters.selection().id;
+  const node = context.selectors.nodeById(scene, selectedId);
+  if (!node) return;
+  const item = MusicOverlay.editor.state.uiAdapters.get(selectedId);
   const changedField = event?.target?.id || "";
-
-  item.name = $("inspectorName").value.trim() || item.id;
-  item.visible = $("inspectorVisible").checked;
-  item.locked = $("inspectorLocked").checked;
-  item.marker = $("inspectorMarker").value;
-  item.x = clampNumber($("inspectorX").value, -10000, 10000, 0);
-  item.y = clampNumber($("inspectorY").value, -10000, 10000, 0);
-  item.scale = clampNumber($("inspectorScale").value, 10, 400, 100);
-  if (MusicOverlay.compat.editorRuntime.selection.type === "layer") item.groupId = $("inspectorGroup").value || null;
-  const parentGroup = MusicOverlay.compat.editorRuntime.selection.type === "layer" ? getGroup(item.groupId) : null;
-  const groupStart = Number(parentGroup?.timing?.startMs || 0);
-  const finiteParent = parentGroup && !parentGroup.timing.untilNextTrack;
+  const isGroup = node.nodeType === "group";
+  const targetParentId = isGroup ? node.parentId || null : ($("inspectorGroup").value || null);
+  const targetParent = targetParentId ? context.selectors.nodeById(scene, targetParentId) : null;
+  const parentWindow = targetParent ? context.selectors.effectiveTiming(scene, targetParent.id) : null;
+  const finiteParent = Boolean(targetParent && Number.isFinite(Number(parentWindow?.endMs)));
   const startInput = clampNumber($("inspectorStart").value, 0, 3600000, 0);
-  if (item.timing.endMs !== null && Number.isFinite(Number(item.timing.endMs))) {
-    item.timing.finiteEndMs = Number(item.timing.endMs);
-  }
-  const storedFiniteEnd = item.timing.finiteEndMs !== null && item.timing.finiteEndMs !== undefined
-    ? Number(item.timing.finiteEndMs) - groupStart
-    : startInput + 1000;
   const rawEnd = $("inspectorEnd").value.trim();
   const endInput = rawEnd === ""
-    ? clampNumber(storedFiniteEnd, startInput + 50, 3600000, startInput + 1000)
+    ? startInput + Math.max(50, Number(node.timing?.durationMs || 1000))
     : clampNumber(rawEnd, startInput + 50, 3600000, startInput + 1000);
-  item.timing.startMs = groupStart + startInput;
-  if (finiteParent) {
-    item.timing.untilNextTrack = false;
-    item.timing.untilGroupEnd = $("inspectorUntilNext").checked;
-    item.timing.endMs = item.timing.untilGroupEnd ? getTimingEnd(parentGroup) : groupStart + endInput;
-  } else {
-    item.timing.untilGroupEnd = false;
-    item.timing.untilNextTrack = $("inspectorUntilNext").checked;
-    item.timing.endMs = item.timing.untilNextTrack ? null : groupStart + endInput;
+  const fillBoundary = $("inspectorUntilNext").checked;
+  const endMode = fillBoundary ? (finiteParent ? "parentEnd" : "trackEnd") : "fixed";
+  const scale = clampNumber($("inspectorScale").value, 10, 400, 100) / 100;
+  const effects = {
+    opacity: clampNumber($("inspectorOpacity").value, 0, 100, 100),
+    blur: clampNumber($("inspectorBlur").value, 0, 80, 0),
+    glow: clampNumber($("inspectorGlow").value, 0, 100, 0)
+  };
+  const mutations = [
+    { type: "node.rename", payload: { id: node.id, name: $("inspectorName").value.trim() || node.id } },
+    { type: "node.visibility", payload: { id: node.id, visible: $("inspectorVisible").checked } },
+    { type: "node.lock", payload: { id: node.id, locked: $("inspectorLocked").checked } },
+    { type: "node.marker", payload: { id: node.id, marker: $("inspectorMarker").value } },
+    {
+      type: "node.transform",
+      payload: {
+        id: node.id,
+        patch: {
+          x: clampNumber($("inspectorX").value, -10000, 10000, 0),
+          y: clampNumber($("inspectorY").value, -10000, 10000, 0),
+          scaleX: scale,
+          scaleY: scale
+        }
+      }
+    }
+  ];
+
+  if (!isGroup && (node.parentId || null) !== targetParentId) {
+    mutations.push({ type: "node.reparent", payload: { id: node.id, parentId: targetParentId } });
   }
-  if (item.timing.endMs !== null) item.timing.finiteEndMs = Number(item.timing.endMs);
-  item.effects.opacity = clampNumber($("inspectorOpacity").value, 0, 100, 100);
-  item.effects.blur = clampNumber($("inspectorBlur").value, 0, 80, 0);
-  item.effects.glow = clampNumber($("inspectorGlow").value, 0, 100, 0);
-  const inheritedAnimationGroup = getAnimationOverrideGroup(item);
-  if (MusicOverlay.compat.editorRuntime.selection.type === "group" && !inheritedAnimationGroup) {
-    item.animation.overrideChildren = $("inspectorOverrideChildren").checked;
+
+  mutations.push({
+    type: "node.timing",
+    payload: {
+      id: node.id,
+      patch: {
+        startMs: startInput,
+        endMode,
+        durationMs: endMode === "fixed" ? Math.max(50, endInput - startInput) : null
+      }
+    }
+  });
+  mutations.push({
+    type: "node.effects",
+    payload: {
+      id: node.id,
+      effects: [
+        { type: "opacity", enabled: true, value: effects.opacity },
+        { type: "blur", enabled: effects.blur > 0, value: effects.blur },
+        { type: "glow", enabled: effects.glow > 0, value: effects.glow }
+      ]
+    }
+  });
+
+  const inheritedAnimationGroup = getAnimationOverrideGroup(item, isGroup ? "group" : "layer");
+  const overrideChildren = isGroup ? $("inspectorOverrideChildren").checked : false;
+  const animationEditable = !inheritedAnimationGroup && (!isGroup || overrideChildren);
+  if (isGroup && !inheritedAnimationGroup) {
+    mutations.push({
+      type: "node.animations",
+      payload: { id: node.id, patch: { overrideChildren } }
+    });
   }
-  const animationEditable = !inheritedAnimationGroup && (MusicOverlay.compat.editorRuntime.selection.type !== "group" || item.animation.overrideChildren === true);
   if (animationEditable) {
-    item.animation.enter = $("inspectorEnter").value;
-    item.animation.exit = $("inspectorExit").value;
-    item.animation.enterDurationMs = clampNumber($("inspectorEnterDuration").value, 0, 10000, 600);
-    if (item.animation.enter !== "none" && item.animation.enterDurationMs === 0) item.animation.enterDurationMs = 600;
-    item.animation.enterEasing = $("inspectorEnterEasing").value;
-    item.animation.exitDurationMs = clampNumber($("inspectorExitDuration").value, 0, 10000, 600);
-    if (item.animation.exit !== "none" && item.animation.exitDurationMs === 0) item.animation.exitDurationMs = 600;
-    item.animation.exitEasing = $("inspectorExitEasing").value;
-    item.animation.durationMs = item.animation.enterDurationMs;
-    item.animation.easing = item.animation.enterEasing;
+    let enterDuration = clampNumber($("inspectorEnterDuration").value, 0, 10000, 600);
+    let exitDuration = clampNumber($("inspectorExitDuration").value, 0, 10000, 600);
+    const enterType = $("inspectorEnter").value;
+    const exitType = $("inspectorExit").value;
+    if (enterType !== "none" && enterDuration === 0) enterDuration = 600;
+    if (exitType !== "none" && exitDuration === 0) exitDuration = 600;
+    mutations.push({
+      type: "node.animations",
+      payload: {
+        id: node.id,
+        patch: {
+          in: {
+            ...(node.animations?.in || {}),
+            type: enterType,
+            durationMs: enterDuration,
+            easing: $("inspectorEnterEasing").value
+          },
+          out: {
+            ...(node.animations?.out || {}),
+            type: exitType,
+            durationMs: exitDuration,
+            easing: $("inspectorExitEasing").value
+          }
+        }
+      }
+    });
   }
-  constrainAllTimings();
-  $("inspectorEnd").disabled = finiteParent ? item.timing.untilGroupEnd : item.timing.untilNextTrack;
-  syncLegacyFromLayout();
-  markThemeDirty();
+
+  context.commit({ type: "batch", payload: { mutations } });
+  $("inspectorEnd").disabled = fillBoundary;
   updateEditor();
+  updateHistoryControls();
+  const updatedItem = MusicOverlay.editor.state.uiAdapters.get(node.id);
   if (animationEditable && (changedField.startsWith("inspectorEnter") || changedField === "inspectorOverrideChildren")) {
-    auditionAnimation(item, "in");
+    auditionAnimation(updatedItem, "in");
   } else if (animationEditable && changedField.startsWith("inspectorExit")) {
-    auditionAnimation(item, "out");
-  }
-}
-
-function syncLegacyFromLayout() {
-  const full = getGroup("full-card-group");
-  const ticker = getGroup("ticker-group");
-  if (full) {
-    MusicOverlay.compat.legacyEditorState.value.timings.fullVisibleMs = full.timing.untilNextTrack
-      ? MusicOverlay.compat.legacyEditorState.value.timings.fullVisibleMs
-      : Math.max(0, Number(full.timing.endMs || 0));
-    MusicOverlay.compat.legacyEditorState.value.animations.fullEnter = full.animation.enter;
-    MusicOverlay.compat.legacyEditorState.value.animations.fullExit = full.animation.exit;
-    MusicOverlay.compat.legacyEditorState.value.timings.exitMs = full.animation.exitDurationMs ?? full.animation.durationMs;
-  }
-  if (ticker) {
-    MusicOverlay.compat.legacyEditorState.value.animations.tickerEnter = ticker.animation.enter;
-    MusicOverlay.compat.legacyEditorState.value.animations.tickerExit = ticker.animation.exit || "none";
-  }
-  fillLegacySyncFields();
-}
-
-function fillLegacySyncFields() {
-  $("fullVisibleMs").value = MusicOverlay.compat.legacyEditorState.value.timings.fullVisibleMs;
-  $("exitMs").value = MusicOverlay.compat.legacyEditorState.value.timings.exitMs;
-  $("fullEnterAnimation").value = MusicOverlay.compat.legacyEditorState.value.animations.fullEnter;
-  $("fullExitAnimation").value = MusicOverlay.compat.legacyEditorState.value.animations.fullExit;
-  $("tickerEnterAnimation").value = MusicOverlay.compat.legacyEditorState.value.animations.tickerEnter;
-}
-
-function syncLayoutFromLegacyInput(id) {
-  const full = getGroup("full-card-group");
-  const ticker = getGroup("ticker-group");
-  if (!full || !ticker) return;
-
-  if (id === "fullVisibleMs") {
-    const previousEnd = full.timing.endMs;
-    const nextEnd = Math.max(100, Number(MusicOverlay.compat.legacyEditorState.value.timings.fullVisibleMs || 10000));
-    full.timing.endMs = nextEnd;
-    full.timing.untilNextTrack = false;
-    ticker.timing.startMs = nextEnd;
-    MusicOverlay.compat.legacyEditorState.value.layout.layers.forEach(layer => {
-      if (layer.groupId === full.id && !layer.timing.untilNextTrack && layer.timing.endMs === previousEnd) layer.timing.endMs = nextEnd;
-      if (layer.groupId === ticker.id && layer.timing.startMs === previousEnd) layer.timing.startMs = nextEnd;
-    });
-  }
-  if (id === "fullEnterAnimation") full.animation.enter = MusicOverlay.compat.legacyEditorState.value.animations.fullEnter;
-  if (id === "fullExitAnimation") full.animation.exit = MusicOverlay.compat.legacyEditorState.value.animations.fullExit;
-  if (id === "tickerEnterAnimation") ticker.animation.enter = MusicOverlay.compat.legacyEditorState.value.animations.tickerEnter;
-  if (id === "exitMs") {
-    full.animation.exitDurationMs = Number(MusicOverlay.compat.legacyEditorState.value.timings.exitMs || 600);
-    ticker.animation.exitDurationMs = Number(MusicOverlay.compat.legacyEditorState.value.timings.exitMs || 600);
-  }
-
-  const layer = layerId => MusicOverlay.compat.legacyEditorState.value.layout.layers.find(item => item.id === layerId);
-  const props = item => item ? (item.properties ||= {}) : {};
-  const fullShell = layer("full-card-shell");
-  const fullCover = layer("full-cover");
-  const fullVinyl = layer("full-vinyl");
-  const fullTitle = layer("full-title");
-  const fullArtist = layer("full-artist");
-  const fullTime = layer("full-time");
-  const fullProgress = layer("full-progress");
-  const tickerTitle = layer("ticker-title");
-  const tickerTime = layer("ticker-time");
-  const tickerProgress = layer("ticker-progress");
-  const tickerEqualizer = layer("ticker-equalizer");
-  const tickerBackground = layer("ticker-group-background");
-  const fullParticles = layer("full-particles");
-
-  if (id === "fullCardWidth") props(fullShell).width = Number(MusicOverlay.compat.legacyEditorState.value.sizes.fullCardWidth);
-  if (id === "coverSize") {
-    props(fullCover).width = Number(MusicOverlay.compat.legacyEditorState.value.sizes.coverSize);
-    props(fullCover).height = Number(MusicOverlay.compat.legacyEditorState.value.sizes.coverSize);
-  }
-  if (id === "vinylSize") props(fullVinyl).size = Number(MusicOverlay.compat.legacyEditorState.value.sizes.vinylSize);
-  if (id === "tickerWidth") {
-    const width = Number(MusicOverlay.compat.legacyEditorState.value.sizes.tickerWidth);
-    props(ticker).width = width;
-    props(tickerBackground).width = width;
-    props(tickerTitle).width = Math.max(40, width - 150);
-    props(tickerProgress).width = Math.max(20, width - 32);
-    props(tickerEqualizer).width = Math.max(20, width - Number(MusicOverlay.compat.legacyEditorState.value.equalizer.sidePadding || 14) * 2);
-    if (tickerTime) tickerTime.x = Math.max(16, width - 116);
-  }
-  if (id === "tickerHeight") {
-    const height = Number(MusicOverlay.compat.legacyEditorState.value.sizes.tickerHeight);
-    props(ticker).height = height;
-    props(tickerBackground).height = height;
-    if (tickerProgress) tickerProgress.y = Math.max(0, height - 10);
-  }
-  if (id === "titleSize") props(fullTitle).fontSize = Number(MusicOverlay.compat.legacyEditorState.value.font.titleSize);
-  if (id === "artistSize") props(fullArtist).fontSize = Number(MusicOverlay.compat.legacyEditorState.value.font.artistSize);
-  if (id === "tickerSize") {
-    props(tickerTitle).fontSize = Number(MusicOverlay.compat.legacyEditorState.value.font.tickerSize);
-    props(tickerTime).fontSize = Math.min(12, Number(MusicOverlay.compat.legacyEditorState.value.font.tickerSize));
-  }
-  if (["backgroundColor", "backgroundOpacity", "fullCardStyle"].includes(id)) {
-    props(fullShell).color = MusicOverlay.compat.legacyEditorState.value.fullCard.style === "minimal" ? "transparent" : MusicOverlay.compat.legacyEditorState.value.colors.background;
-    props(fullShell).style = MusicOverlay.compat.legacyEditorState.value.fullCard.style;
-  }
-  if (["backgroundColor", "backgroundOpacity", "tickerStyle"].includes(id)) {
-    props(tickerBackground).color = MusicOverlay.compat.legacyEditorState.value.colors.background;
-    props(tickerBackground).style = MusicOverlay.compat.legacyEditorState.value.ticker.style;
-    props(tickerBackground).borderRadius = ["thin", "compact"].includes(MusicOverlay.compat.legacyEditorState.value.ticker.style)
-      ? 8
-      : MusicOverlay.compat.legacyEditorState.value.ticker.style === "glass" ? 18 : 999;
-  }
-  if (id === "text") {
-    [fullTitle, fullArtist, fullTime, tickerTitle, tickerTime].forEach(item => props(item).color = MusicOverlay.compat.legacyEditorState.value.colors.text);
-  }
-  if (id === "progress") {
-    [fullProgress, tickerProgress].forEach(item => props(item).color = MusicOverlay.compat.legacyEditorState.value.colors.progress);
-  }
-  if (["progressBackgroundColor", "progressBackgroundOpacity"].includes(id)) {
-    [fullProgress, tickerProgress].forEach(item => props(item).background = MusicOverlay.compat.legacyEditorState.value.colors.progressBackground);
-  }
-  if (id === "vinylStyle") props(fullVinyl).style = MusicOverlay.compat.legacyEditorState.value.vinyl.style;
-  if (id.startsWith("particles")) {
-    Object.assign(props(fullParticles), {
-      style: MusicOverlay.compat.legacyEditorState.value.particles.style, color: MusicOverlay.compat.legacyEditorState.value.particles.color,
-      count: MusicOverlay.compat.legacyEditorState.value.particles.count, size: MusicOverlay.compat.legacyEditorState.value.particles.size,
-      durationMs: MusicOverlay.compat.legacyEditorState.value.particles.durationMs
-    });
-    if (fullParticles) fullParticles.visible = MusicOverlay.compat.legacyEditorState.value.particles.enabled;
-  }
-  if (id.startsWith("equalizer") || id === "fftPreset") {
-    Object.assign(props(tickerEqualizer), {
-      style: MusicOverlay.compat.legacyEditorState.value.equalizer.style, color: MusicOverlay.compat.legacyEditorState.value.equalizer.colorMode === "custom" ? MusicOverlay.compat.legacyEditorState.value.equalizer.color : MusicOverlay.compat.legacyEditorState.value.colors.progress,
-      barCount: MusicOverlay.compat.legacyEditorState.value.equalizer.barCount, gap: MusicOverlay.compat.legacyEditorState.value.equalizer.gap,
-      height: MusicOverlay.compat.legacyEditorState.value.equalizer.height, glow: MusicOverlay.compat.legacyEditorState.value.equalizer.glow,
-      glowPower: MusicOverlay.compat.legacyEditorState.value.equalizer.glowPower
-    });
-    if (tickerEqualizer) tickerEqualizer.visible = MusicOverlay.compat.legacyEditorState.value.equalizer.enabled;
+    auditionAnimation(updatedItem, "out");
   }
 }
 

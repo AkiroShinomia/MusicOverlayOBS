@@ -3,6 +3,7 @@
 
   const clone = value => structuredClone(value ?? {});
   const numberOr = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+  const BUILTIN_IDS = window.MusicOverlay.editor.compat.builtinV2Rules.IDS;
 
   function effectsToScene(value) {
     return [
@@ -267,21 +268,21 @@
     };
 
     const byId = id => nodesById.get(id)?.component?.properties || {};
-    const fullGroup = groups.find(group => group.id === "full-card-group");
-    const tickerGroup = groups.find(group => group.id === "ticker-group");
+    const fullGroup = groups.find(group => group.id === BUILTIN_IDS.fullGroup);
+    const tickerGroup = groups.find(group => group.id === BUILTIN_IDS.tickerGroup);
     config.position = {
       ...(config.position || {}),
       left: numberOr(fullGroup?.x ?? tickerGroup?.x, config.position?.left || 70),
-      fullBottom: Math.max(0, numberOr(scene.canvas?.height, 1080) - numberOr(fullGroup?.y, 0) - numberOr(byId("full-card-group").height, 0)),
-      tickerBottom: Math.max(0, numberOr(scene.canvas?.height, 1080) - numberOr(tickerGroup?.y, 0) - numberOr(byId("ticker-group").height, 0))
+      fullBottom: Math.max(0, numberOr(scene.canvas?.height, 1080) - numberOr(fullGroup?.y, 0) - numberOr(byId(BUILTIN_IDS.fullGroup).height, 0)),
+      tickerBottom: Math.max(0, numberOr(scene.canvas?.height, 1080) - numberOr(tickerGroup?.y, 0) - numberOr(byId(BUILTIN_IDS.tickerGroup).height, 0))
     };
     config.sizes = {
       ...(config.sizes || {}),
-      fullCardWidth: numberOr(byId("full-card-shell").width, config.sizes?.fullCardWidth || 430),
-      tickerWidth: numberOr(byId("ticker-group").width, config.sizes?.tickerWidth || 500),
-      tickerHeight: numberOr(byId("ticker-group").height, config.sizes?.tickerHeight || 42),
-      coverSize: numberOr(byId("full-cover").width, config.sizes?.coverSize || 92),
-      vinylSize: numberOr(byId("full-vinyl").size, config.sizes?.vinylSize || 108)
+      fullCardWidth: numberOr(byId(BUILTIN_IDS.fullShell).width, config.sizes?.fullCardWidth || 430),
+      tickerWidth: numberOr(byId(BUILTIN_IDS.tickerGroup).width, config.sizes?.tickerWidth || 500),
+      tickerHeight: numberOr(byId(BUILTIN_IDS.tickerGroup).height, config.sizes?.tickerHeight || 42),
+      coverSize: numberOr(byId(BUILTIN_IDS.fullCover).width, config.sizes?.coverSize || 92),
+      vinylSize: numberOr(byId(BUILTIN_IDS.fullVinyl).size, config.sizes?.vinylSize || 108)
     };
     return config;
   }

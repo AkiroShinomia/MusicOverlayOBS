@@ -11,9 +11,12 @@ dotnet run --no-build -c Release --project MusicOverlay.csproj -- --skip-update 
 dotnet run --no-build -c Release --project MusicOverlay.csproj -- --skip-update --verify-stage2c
 dotnet run --no-build -c Release --project MusicOverlay.csproj -- --skip-update --verify-stage2d
 dotnet run --no-build -c Release --project MusicOverlay.csproj -- --skip-update --verify-stage2e
+dotnet run --no-build -c Release --project MusicOverlay.csproj -- --skip-update --verify-stage2f
 ```
 
 `--verify-stage2e` checks script order, file presence, API/fetch isolation, legacy state ownership, backend extraction and baseline Scene documents.
+
+`--verify-stage2f` checks the canonical Scene Store contract, typed mutations, subtree duplication, parent-group validation, stable Scene hashing, Scene-only history, direct publish semantics, built-in ID centralization, compatibility-boundary isolation and Stage 2F characterization tests.
 
 ## Pure JavaScript characterization
 
@@ -22,6 +25,8 @@ The existing CommonJS tests cover the playback clock and animation inheritance:
 ```powershell
 node tests/playback-clock.test.cjs
 node tests/animation-inheritance.test.cjs
+node tests/scene-store.test.cjs
+node tests/editor-context.test.cjs
 ```
 
 When Node is not on the system PATH, run these tests with the bundled workspace Node runtime used by Codex/CI.

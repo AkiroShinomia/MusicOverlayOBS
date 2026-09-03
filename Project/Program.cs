@@ -53,6 +53,11 @@ if (args.Contains("--verify-stage2e"))
     await PrintAndExitAsync(ModularFoundationVerifier.VerifyAsync(store));
     return;
 }
+if (args.Contains("--verify-stage2f"))
+{
+    await PrintAndExitAsync(CanonicalEditorStateVerifier.VerifyAsync(store));
+    return;
+}
 
 var audio = new AudioLevelService();
 audio.Start();

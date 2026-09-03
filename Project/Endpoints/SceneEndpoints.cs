@@ -16,6 +16,25 @@ public sealed class SceneEndpoints(ISceneStore scenes, WebSocketHub sockets)
     public Task GetPublishedAsync(HttpListenerContext context) =>
         SendAsync(context, scenes.GetPublishedSceneAsync());
 
+    public async Task SaveDraftAsync(HttpListenerContext context)
+    {
+        using var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8);
+        string body = await reader.ReadToEndAsync();
+        try
+        {
+            JsonObject root = JsonNode.Parse(body) as JsonObject
+                ?? throw new JsonException("Request root must be an object");
+            JsonObject scene = root["scene"] as JsonObject
+                ?? throw new InvalidDataException("Scene document is required");
+            long revision = await scenes.SaveDraftSceneAsync(scene, root["settings"] as JsonObject);
+            await ApiResult.JsonAsync(context, new { ok = true, revision });
+        }
+        catch (Exception ex)
+        {
+            await ApiResult.ErrorAsync(context, 400, ex.Message);
+        }
+    }
+
     public async Task PublishAsync(HttpListenerContext context)
     {
         using var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8);
